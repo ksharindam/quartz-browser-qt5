@@ -1,0 +1,5 @@
+include README.rst
+include quartz_browser/userContent.css
+include quartz_browser/blocklist.txt
+include quartz_browser/home.html
+include quartz_browser/quartz-browser.jpg

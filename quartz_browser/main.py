@@ -1,0 +1,920 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __init__ import __version__, homedir, downloaddir, program_dir
+import sys, shlex, os, re, subprocess
+from time import time
+from urlparse import urlparse, parse_qs
+
+from PyQt5.Qt import QStringListModel
+from PyQt5.QtCore import ( QUrl, pyqtSignal, Qt, QSettings, QSize, QPoint )
+from PyQt5.QtCore import QFileInfo, QByteArray, QEventLoop, QTimer
+
+from PyQt5.QtGui import QIcon, QPainter, QPixmap, QFont
+from PyQt5.QtWidgets import ( QApplication, QMainWindow, QWidget,
+    QFileDialog, QDialog, QListView,
+    QLineEdit, QCompleter, QComboBox, QPushButton, QToolButton, QAction, QMenu,
+    QGridLayout, QProgressBar, QMessageBox, QInputDialog, QLabel,
+    QTabWidget )
+from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
+from PyQt5.QtNetwork import QNetworkRequest
+from PyQt5.QtWebKit import QWebSettings
+from PyQt5.QtWebKitWidgets import QWebPage
+
+from settings_dialog import Ui_SettingsDialog
+from bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
+from import_export import *
+from download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
+import download_confirm, youtube_dialog
+import resources, webkit
+from pytube.api import YouTube
+
+docdir = homedir+"/Documents/"
+configdir = homedir+"/.config/quartz-browser/"
+downloads_list_file = configdir+"downloads.txt"
+thumbnails_dir = configdir + 'thumbnails/'
+homepage = 'file://' + program_dir + 'home.html'
+
+youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.*&v)=)([a-zA-Z0-9\-_])+')
+
+def validYoutubeUrl(url):
+    if youtube_regex.match(url):
+        return True
+
+
+
+class Main(QMainWindow):
+    def __init__(self): 
+        global downloads_list_file
+        QMainWindow.__init__(self)
+        self.setWindowIcon(QIcon(":/quartz.png")) 
+        self.setWindowTitle("Quartz Browser - "+__version__)
+        # Window Properties
+        self.history = []
+        self.downloads = []
+        self.confirm_before_quit = True
+        # Create required directories
+        for folder in [configdir, icon_dir, thumbnails_dir]:
+            if not os.path.exists(folder):
+                os.mkdir(folder)
+        # Import and Apply Settings
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.settings = QSettings(1, 0, "quartz-browser","Quartz", self)
+        self.opensettings()
+        self.websettings = QWebSettings.globalSettings()
+        self.websettings.setAttribute(QWebSettings.DnsPrefetchEnabled, True)
+        self.websettings.setMaximumPagesInCache(10)
+        self.websettings.setIconDatabasePath(icon_dir)
+        self.websettings.setAttribute(QWebSettings.JavascriptCanOpenWindows, True)
+        self.websettings.setAttribute(QWebSettings.JavascriptCanCloseWindows, True)
+        if webkit.enable_adblock:
+            self.websettings.setUserStyleSheetUrl(QUrl.fromLocalFile(program_dir + 'userContent.css'))
+        # Import Downloads and Bookmarks
+        self.dwnldsmodel = DownloadsModel(self.downloads, QApplication.instance())
+        self.dwnldsmodel.deleteDownloadsRequested.connect(self.deleteDownloads)
+        imported_downloads = importDownloads(downloads_list_file)
+        for [filepath, url, totalsize, timestamp] in imported_downloads:
+            try :                                                  # Check if downloads.txt is valid
+                tymstamp = float(timestamp)
+            except :
+                self.downloads = []
+                exportDownloads(downloads_list_file, [])
+                print("Error in importing Downloads.")
+                break
+            old_download = Download(networkmanager)
+            old_download.loadDownload(filepath, url, totalsize, timestamp)
+            old_download.datachanged.connect(self.dwnldsmodel.datachanged)
+            self.downloads.append(old_download)
+        self.bookmarks = importBookmarks(configdir+"bookmarks.txt")
+        self.favourites = importFavourites(configdir + 'favourites.txt')
+        # Find and set icon theme name
+        for theme_name in ['Adwaita', 'Gnome', 'Tango']:
+            if os.path.exists('/usr/share/icons/' + theme_name):
+                QIcon.setThemeName(theme_name)
+                break
+        self.initUI()
+        self.resize(1024,714)
+
+    def initUI(self):
+###############################  Create  Actions ##############################
+        self.loadimagesaction = QAction("Load Images",self)
+        self.loadimagesaction.setCheckable(True)
+        self.loadimagesaction.triggered.connect(self.loadimages)
+
+        self.javascriptmode = QAction("Enable Javascript",self)
+        self.javascriptmode.setCheckable(True)
+        self.javascriptmode.triggered.connect(self.setjavascript)
+
+################ Add Actions to Menu ####################
+        self.menu = QMenu(self)
+        self.menu.addAction(QIcon.fromTheme("edit-find"), "Find Text", self.findmode, "Ctrl+F")
+        self.menu.addAction(QIcon.fromTheme("list-add"), "Zoom In", self.zoomin, "Ctrl++")
+        self.menu.addAction(QIcon.fromTheme("list-remove"), "Zoom Out", self.zoomout, "Ctrl+-")
+        self.menu.addAction(QIcon.fromTheme("view-fullscreen"), "Toggle Fullscreen", self.fullscreenmode, "F11")
+        self.menu.addSeparator()
+
+        self.menu.addAction(self.loadimagesaction)
+        self.menu.addAction(self.javascriptmode)
+        self.menu.addAction(QIcon.fromTheme("applications-system"), "Settings", self.settingseditor, "Ctrl+,")
+        self.menu.addSeparator()
+
+        self.menu.addAction(QIcon.fromTheme("image-x-generic"), "Save as Image", self.saveAsImage, "Shift+Ctrl+S")
+        self.menu.addAction(QIcon.fromTheme("text-html"), "Save as HTML", self.saveashtml, "Ctrl+S")
+        self.menu.addAction(QIcon.fromTheme("document-print"), "Print to PDF", self.printpage, "Ctrl+P")
+        self.menu.addSeparator()
+        self.menu.addAction(QIcon.fromTheme("process-stop"), "Quit", self.forceClose, "Ctrl+Q")
+
+        self.bmk_menu = QMenu(self)
+        self.bmk_menu.addAction(QIcon(':/add-bookmark.png'), 'Add Bookmark', self.addbookmark)
+        self.bmk_menu.addAction(QIcon(':/favourites.png'), 'Add to Home', self.addToFavourites)
+        
+###############################  Create Gui Parts ##############################
+        grid = QGridLayout()
+        grid.setSpacing(1)
+        grid.setContentsMargins(0,2,0,0)
+        self.centralwidget = QWidget(self)
+        self.centralwidget.setLayout(grid)
+        self.setCentralWidget(self.centralwidget)
+
+        self.addtabBtn = QPushButton(QIcon(":/add-tab.png"), "",self)
+        self.addtabBtn.setToolTip("New Tab\n[Ctrl+Tab]")
+        self.addtabBtn.setShortcut("Ctrl+Tab")
+        self.addtabBtn.clicked.connect(self.addTab)
+
+        self.reload = QPushButton(QIcon(":/refresh.png"), "",self) 
+        self.reload.setMinimumSize(35,26) 
+        self.reload.setToolTip("Reload/Stop\n  [Space]")
+        self.reload.setShortcut("Space")
+        self.reload.clicked.connect(self.Reload)
+
+        self.back = QPushButton(QIcon(":/prev.png"), "", self) 
+        self.back.setToolTip("Previous Page\n [Backspace]")
+        self.back.setMinimumSize(35,26) 
+        self.back.clicked.connect(self.Back)
+
+        self.forw = QPushButton(QIcon(":/next.png"), "",self) 
+        self.forw.setToolTip("Next Page\n [Shift+Backspace]")
+        self.forw.setMinimumSize(35,26) 
+        self.forw.clicked.connect(self.Forward)
+
+        self.homeBtn = QPushButton(QIcon(":/home.png"), "",self) 
+        self.homeBtn.setToolTip("Go Home")
+        self.homeBtn.clicked.connect(self.goToHome)
+
+        self.videoDownloadButton = QPushButton(QIcon(":/video-dwnld.png"), "", self)
+        self.videoDownloadButton.setToolTip("Download this Video")
+        self.videoDownloadButton.clicked.connect(self.downloadVideo)
+        self.videoDownloadButton.hide()
+
+        self.addbookmarkBtn = QToolButton(self)
+        self.addbookmarkBtn.setIcon(QIcon(":/add-bookmark.png"))
+        self.addbookmarkBtn.setToolTip("Add Bookmark")
+        self.addbookmarkBtn.setMenu(self.bmk_menu)
+        self.addbookmarkBtn.setPopupMode(QToolButton.InstantPopup)
+
+        self.menuBtn = QToolButton(self)
+        self.menuBtn.setIcon(QIcon(":/menu.png"))
+        self.menuBtn.setMenu(self.menu)
+        self.menuBtn.setPopupMode(QToolButton.InstantPopup)
+
+        self.bookmarkBtn = QPushButton(QIcon(":/bookmarks.png"), "", self)
+        self.bookmarkBtn.setToolTip("Manage Bookmarks\n         [Alt+B]")
+        self.bookmarkBtn.setShortcut("Alt+B")
+        self.bookmarkBtn.clicked.connect(self.managebookmarks)
+        self.historyBtn = QPushButton(QIcon(":/history.png"), "", self)
+        self.historyBtn.setShortcut("Alt+H")
+        self.historyBtn.setToolTip("View History\n     [Alt+H]")
+        self.historyBtn.clicked.connect(self.viewhistory)
+
+        self.downloadsBtn = QPushButton(QIcon(":/download.png"), "", self)
+        self.downloadsBtn.setToolTip("Download Manager")
+        self.downloadsBtn.clicked.connect(self.download_manager)
+
+        self.find = QPushButton(self)
+        self.find.setText("Find/Next")
+        self.find.clicked.connect(self.findnext)
+        self.find.hide()
+        self.findprev = QPushButton(self)
+        self.findprev.setText("Backward")
+        self.findprev.clicked.connect(self.findback)
+        self.findprev.hide()
+        self.cancelfind = QPushButton(self)
+        self.cancelfind.setText("Cancel")
+        self.cancelfind.clicked.connect(self.cancelfindmode)
+        self.cancelfind.hide()
+
+        self.pbar = QProgressBar(self) 
+        self.pbar.setTextVisible(False)
+        self.pbar.setStyleSheet("QProgressBar::chunk { background-color: #bad8ff; }")
+        pbarLayout = QGridLayout(self.pbar)
+        pbarLayout.setContentsMargins(0,0,0,0)
+
+        self.line = webkit.UrlEdit(self.pbar)
+        self.line.openUrlRequested.connect(self.Enter)
+        self.line.textEdited.connect(self.urlsuggestions)
+        self.line.downloadRequested.connect(self.download_requested_file)
+        pbarLayout.addWidget(self.line)
+
+        self.listmodel = QStringListModel(self)
+        self.completer = QCompleter(self.listmodel, self.line)
+        self.completer.setCompletionMode(1)
+        self.completer.setMaxVisibleItems(10)
+        self.line.setCompleter(self.completer)
+
+        self.statusbar = QLabel(self)
+        self.statusbar.setStyleSheet("QLabel { font-size: 12px; border-radius: 2px; padding: 2px; background: palette(highlight); color: palette(highlighted-text); }")
+        self.statusbar.setMaximumHeight(16)
+        self.statusbar.hide()
+
+        self.tabWidget = QTabWidget(self)
+        self.tabWidget.setTabsClosable(True)
+        self.tabWidget.setDocumentMode(True)
+        self.tabWidget.tabBar().setExpanding(True)
+        self.tabWidget.tabBar().setElideMode(Qt.ElideMiddle)
+        self.tabWidget.currentChanged.connect(self.onTabSwitch)
+        self.tabWidget.tabCloseRequested.connect(self.closeTab)
+        self.addTab()
+        self.applysettings()
+#       
+
+        for index, widget in enumerate([self.addtabBtn, self.back, self.forw, self.reload, self.homeBtn, self.videoDownloadButton,
+                self.pbar, self.find, self.findprev, self.cancelfind, self.addbookmarkBtn, self.menuBtn,
+                self.bookmarkBtn, self.historyBtn, self.downloadsBtn]):
+            grid.addWidget(widget, 0,index,1,1)
+        grid.addWidget(self.tabWidget, 2, 0, 1, 15)
+
+#-----------------------Window settings --------------------------------
+#        Must be at the end, otherwise cause segmentation fault
+#       self.status = self.statusBar() 
+
+    def addTab(self, webview_tab=None):
+        """ Creates a new tab and add to QTabWidget
+            applysettings() must be called after adding each tab"""
+        if not webview_tab:
+            webview_tab = webkit.MyWebView(self.tabWidget, networkmanager) 
+        webview_tab.windowCreated.connect(self.addTab)
+        webview_tab.loadStarted.connect(self.onLoadStart) 
+        webview_tab.loadFinished.connect(self.onLoadFinish) 
+        webview_tab.loadProgress.connect(self.onProgress)
+        webview_tab.urlChanged.connect(self.onUrlChange)
+        webview_tab.titleChanged.connect(self.onTitleChange)
+        webview_tab.iconChanged.connect(self.onIconChange)
+        webview_tab.page().printRequested.connect(self.printpage)
+        webview_tab.page().downloadRequested.connect(self.download_requested_file)
+        webview_tab.page().unsupportedContent.connect(self.handleUnsupportedContent)
+        webview_tab.page().linkHovered.connect(self.onLinkHover)
+        webview_tab.page().windowCloseRequested.connect(self.closeRequestedTab)
+
+        self.tabWidget.addTab(webview_tab, "( Untitled )")
+        if self.tabWidget.count()==1:
+            self.tabWidget.tabBar().hide()
+        else:
+            self.tabWidget.tabBar().show()
+        self.tabWidget.setCurrentIndex(self.tabWidget.count()-1)
+
+    def closeTab(self, index=None):
+        """ Closes tab, hides tabbar if only one tab remains"""
+        if index==None:
+            index = self.tabWidget.currentIndex()
+        widget = self.tabWidget.widget(index)
+        self.tabWidget.removeTab(index)
+        widget.deleteLater()
+        # Auto hide tab bar, when no. of tab widget is one
+        if self.tabWidget.count()==1:
+            self.tabWidget.tabBar().hide()
+
+    def closeRequestedTab(self):
+        """ Close tab requested by the page """
+        webview = self.sender().view()
+        index = self.tabWidget.indexOf(webview)
+        self.closeTab(index)
+
+    def Enter(self): 
+        url = self.line.text()
+        if url == 'about:home':
+            self.goToHome()
+        else:
+            self.GoTo(url)
+
+    def GoTo(self, url):
+        URL = QUrl.fromUserInput(url)
+        self.tabWidget.currentWidget().openLink(URL)
+        self.line.setText(url)
+        self.tabWidget.currentWidget().setFocus()
+
+    def goToHome(self):
+        self.GoTo(homepage)
+        loop = QEventLoop()
+        QTimer.singleShot(10, loop.quit)
+        loop.exec_()
+        document = self.tabWidget.currentWidget().page().mainFrame().documentElement()
+        gallery = document.findFirst('div')
+        for i, fav in enumerate(self.favourites):
+            title, url, img = fav[0], fav[1], thumbnails_dir+fav[2]
+            child = '<div class="photo"> <a href="{}"><img src="{}"></a><div class="desc">{}</div></div>'.format(url, img, title)
+            gallery.appendInside(child)
+
+    def onLoadStart(self):
+        webview = self.sender()
+        if webview is self.tabWidget.currentWidget():
+          self.reload.setIcon(QIcon(":/stop.png"))
+
+    def onProgress(self, progress):
+        webview = self.sender()
+        if webview is self.tabWidget.currentWidget() and webview.loading:
+            self.pbar.setValue(progress)
+
+    def onLoadFinish(self, ok):
+        webview = self.sender()
+        if webview is self.tabWidget.currentWidget():
+          self.reload.setIcon(QIcon(":/refresh.png"))
+          self.pbar.reset()
+          url = self.line.text()
+          self.handleVideoButton(url)
+
+    def onTabSwitch(self, index):
+        """ Updates urlbox, refresh icon, progress bar on switching tab"""
+        webview = self.tabWidget.currentWidget()
+        if webview.loading == True:
+            self.reload.setIcon(QIcon(":/stop.png"))
+            self.pbar.setValue(webview.progressVal)
+        else:
+            self.reload.setIcon(QIcon(":/refresh.png"))
+            self.pbar.reset()
+        url =  webview.url().toString()
+        if url == homepage : url = 'about:home'
+        self.line.setText(url)
+        self.statusbar.hide()
+        self.onIconChange(webview)
+        self.handleVideoButton(url)
+
+    def onUrlChange(self,url):
+        url = url.toString()
+        if url == homepage : url = 'about:home'
+        webview = self.sender()
+        if webview is self.tabWidget.currentWidget():
+            self.line.setText(url)
+            self.onIconChange(webview)
+            self.handleVideoButton(url)
+
+    def onTitleChange(self, title):
+        webview = self.sender()
+        index = self.tabWidget.indexOf(webview)
+        if not title == '':
+            self.tabWidget.tabBar().setTabText(index, title)
+            url = webview.url().toString()
+            for item in self.history:  # Removes the old item, inserts new same item on the top
+                if url == item[1]:
+                    self.history.remove(item)
+            self.history.insert(0, [title, url])
+
+    def onIconChange(self, webview=None):
+        if not webview:
+            webview = self.sender()
+        icon = webview.icon()
+        if icon.isNull():
+            icon = QIcon(':/quartz.png')
+        if webview is self.tabWidget.currentWidget():
+            self.line.setIcon(icon)
+        index = self.tabWidget.indexOf(webview)
+        self.tabWidget.setTabIcon(index, icon)
+
+    def onLinkHover(self, url):
+        if url=="":
+            self.statusbar.hide()
+            return
+        self.statusbar.setText(url)
+        self.statusbar.adjustSize()
+        self.statusbar.show()
+        self.statusbar.move(QPoint(0, self.height()-self.statusbar.height()))
+
+    def Back(self): 
+        self.tabWidget.currentWidget().back() 
+    def Forward(self): 
+        self.tabWidget.currentWidget().forward()
+    def Reload(self):
+        if self.tabWidget.currentWidget().loading:
+            self.tabWidget.currentWidget().stop()
+        else:
+            if self.line.text() == 'about:home':
+                self.goToHome()
+            else:
+                self.tabWidget.currentWidget().reload()
+
+    def urlsuggestions(self, text):
+        """ Creates the list of url suggestions for URL box """
+        suggestions = []
+        if not webkit.find_mode_on:
+            for [title, url] in self.history:
+                if text in url:
+                    suggestions.insert(0, url)
+            for [title, address] in self.bookmarks:
+                if str(text) in address:
+                    suggestions.insert(0, address)
+        self.listmodel.setStringList( suggestions )
+
+    def handleVideoButton(self, url):
+        if validYoutubeUrl(url):
+            self.videoDownloadButton.show()
+            return
+        self.video_URL = False
+        frames = [self.tabWidget.currentWidget().page().mainFrame()]
+        frames += self.tabWidget.currentWidget().page().mainFrame().childFrames()
+        for frame in frames:
+            videos = frame.findAllElements('video').toList()
+            for video in videos:
+                dl_link = video.attribute('src')
+                child = video.findFirst('source[src]')
+                if dl_link == '' and not child.isNull():
+                    dl_link = child.attribute('src')
+                dl_url = QUrl(dl_link)
+                if not dl_url.isValid(): continue
+                if dl_url.isRelative():
+                    dl_url = frame.url().resolved(dl_url)
+                self.video_URL = QUrl.fromUserInput(dl_url.toString())
+                self.video_page_url = frame.url().toString()
+                break
+                break
+        if self.video_URL:
+            self.videoDownloadButton.show()
+        else:
+            self.videoDownloadButton.hide()
+
+
+##################### Downloading and Printing  ########################
+    def download_requested_file(self, networkrequest):
+        """ Gets called when the page requests a file to be downloaded """
+        reply = networkmanager.get(networkrequest)
+        self.handleUnsupportedContent(reply)
+
+    def handleUnsupportedContent(self, reply, force_filename=None):
+        """ This is called when url content is a downloadable file. e.g- pdf,mp3,mp4 """
+        if reply.rawHeaderList() == []:
+            loop = QEventLoop()
+            reply.metaDataChanged.connect(loop.quit)
+            QTimer.singleShot(5000, loop.quit)
+            loop.exec_()
+        if reply.hasRawHeader('Location'):
+            URL = QUrl.fromUserInput(reply.rawHeader('Location'))
+            reply.abort()
+            reply = networkmanager.get(QNetworkRequest(URL))
+            self.handleUnsupportedContent(reply, force_filename)
+            return
+        for (title, header) in reply.rawHeaderPairs():
+            print( title+"-> "+header )
+        # Get filename
+        content_name = str(reply.rawHeader('Content-Disposition'))
+        if force_filename:
+            filename = force_filename
+        elif 'filename=' in content_name or 'filename*=' in content_name:
+            if content_name.count('"') >= 2: # Extracts texts inside quotes when two quotes are present
+                start = content_name.find('"')+1
+                end = content_name.rfind('"')
+                filename = content_name[start:end]
+            else:
+                filename = content_name.split('=')[-1]
+        else:
+            decoded_url = QUrl.fromUserInput(reply.url().toString())
+            decoded_url = decoded_url.toString(QUrl.RemoveQuery)
+            filename = QFileInfo(decoded_url).fileName()
+        filename = validateFileName(filename)
+        # Create downld Confirmation dialog
+        dlDialog = DownloadDialog(self)
+        dlDialog.filenameEdit.setText(filename)
+        # Get filesize
+        if reply.hasRawHeader('Content-Length'):
+            filesize = reply.header(1)
+            if filesize >= 1048576 :
+                file_size = "{} M".format(round(float(filesize)/1048576, 2))
+            elif 1023 < filesize < 1048576 :
+                file_size = "{} k".format(round(float(filesize)/1024, 1))
+            else:
+                file_size = "{} B".format(filesize)
+            dlDialog.labelFileSize.setText(file_size)
+        # Get filetype and resume support info
+        if reply.hasRawHeader('Content-Type'):
+            dlDialog.labelFileType.setText(str(reply.rawHeader('Content-Type')))
+        if reply.hasRawHeader('Accept-Ranges') or reply.hasRawHeader('Content-Range'):
+            dlDialog.labelResume.setText("True")
+        # Execute dialog and show confirmation
+        if dlDialog.exec_()== QDialog.Accepted:
+            filepath = dlDialog.folder + dlDialog.filenameEdit.text()
+            url = reply.url().toString()
+            if self.useexternaldownloader:
+                download_externally(url, self.externaldownloader)
+                reply.abort()
+                reply.deleteLater()
+                return
+
+            global downloads_list_file
+            newdownload = Download(networkmanager)
+            newdownload.startDownload(reply, filepath)
+            newdownload.datachanged.connect(self.dwnldsmodel.datachanged)
+            self.downloads.insert(0, newdownload)
+            imported_downloads = importDownloads(downloads_list_file)
+            imported_downloads.insert(0, [filepath, url, str(newdownload.totalsize), newdownload.timestamp])
+            exportDownloads(downloads_list_file, imported_downloads)
+        else:
+            reply.abort()
+            reply.deleteLater()
+
+    def download_manager(self):
+        """ Opens download manager dialog """
+        dialog = QDialog(self)
+        downloads_dialog = Downloads_Dialog()
+        downloads_dialog.setupUi(dialog, self.dwnldsmodel)
+        dialog.exec_()
+
+    def deleteDownloads(self, timestamps):
+        global downloads_list_file
+        imported_downloads = importDownloads(downloads_list_file)
+        exported_downloads = []
+        for download in imported_downloads:
+            if download[-1] not in timestamps:
+                exported_downloads.append(download)
+        exportDownloads(downloads_list_file, exported_downloads)
+
+    def downloadVideo(self):
+        url = self.tabWidget.currentWidget().url().toString()
+        # For youtube videos
+        if validYoutubeUrl(url):
+            vid_id = parse_qs(urlparse(url).query)['v'][0]
+            url = 'https://m.youtube.com/watch?v=' + vid_id
+            yt = YouTube(url)    # Use PyTube module for restricted videos
+            videos = yt.get_videos()
+            dialog = youtube_dialog.YoutubeDialog(videos, self)
+            if dialog.exec_() == 1 :
+                index = abs(dialog.buttonGroup.checkedId())-2
+                vid = videos[index]
+                reply = networkmanager.get( QNetworkRequest(QUrl.fromUserInput(vid.url)) )
+                self.handleUnsupportedContent(reply, vid.filename + '.' + vid.extension)
+            return
+        # For embeded HTML5 videos
+        request = QNetworkRequest(self.video_URL)
+        request.setRawHeader('Referer', self.video_page_url)
+        reply = networkmanager.get(request)
+        self.handleUnsupportedContent(reply)
+
+    def saveAsImage(self):
+        """ Saves the whole page as PNG/JPG image"""
+        title = self.tabWidget.currentWidget().page().mainFrame().title()
+        title == validateFileName(title)
+        filename = QFileDialog.getSaveFileName(self,
+                                      "Select Image to Save", downloaddir + title +".jpg",
+                                      "JPEG Image (*.jpg);;PNG Image (*.png)" )[0]
+        if filename == '': return
+        viewportsize = self.tabWidget.currentWidget().page().viewportSize()
+        contentsize = self.tabWidget.currentWidget().page().mainFrame().contentsSize()
+        self.tabWidget.currentWidget().page().setViewportSize(contentsize)
+        img = QPixmap(contentsize)
+        painter = QPainter(img)
+        self.tabWidget.currentWidget().page().mainFrame().render(painter)
+        painter.end()
+        if img.save(filename):
+            QMessageBox.information(self, "Successful !","Page has been successfully saved as\n"+filename)
+        else:
+            QMessageBox.warning(self, "Saving Failed !","Exporting page to Image hasbeen failed")
+        self.tabWidget.currentWidget().page().setViewportSize(viewportsize)
+
+    def saveashtml(self):
+        """ Saves current page as HTML , bt does not saves any content (e.g images)"""
+        title = self.tabWidget.currentWidget().page().mainFrame().title()
+        title = validateFileName(title)
+        filename = QFileDialog.getSaveFileName(self,
+                                      "Enter HTML File Name", downloaddir + title +".html",
+                                      "HTML Document (*.html)" )[0]
+        if filename == '': return
+        #html = self.tabWidget.currentWidget().page().mainFrame().toHtml()
+        page_URL = self.tabWidget.currentWidget().url()
+        useragent = self.tabWidget.currentWidget().page().userAgentForUrl(QUrl())
+        doc = self.tabWidget.currentWidget().page().mainFrame().documentElement().clone()
+        #doc.setInnerXml(html)
+        SaveAsHtml(networkmanager, doc, filename, page_URL, useragent)
+
+    def printpage(self, page=None):
+        """ Prints current/requested page """
+        if not page:
+            page = self.tabWidget.currentWidget().page().currentFrame()
+        printer = QPrinter(mode=QPrinter.HighResolution)
+        printer.setCreator("Quartz Browser")
+        title = self.tabWidget.currentWidget().page().mainFrame().title()
+        title = validateFileName(title)
+        printer.setDocName(title)
+        printer.setOutputFileName(docdir + title + ".pdf")
+        print_dialog = QPrintPreviewDialog(printer, self)
+        print_dialog.paintRequested.connect(page.print_)
+        print_dialog.exec_()
+
+##################################################################################################
+    def addToFavourites(self):
+        dialog = QDialog(self)
+        addbmkdialog = Add_Bookmark_Dialog()
+        addbmkdialog.setupUi(dialog)
+        dialog.setWindowTitle('Add to HomePage')
+        addbmkdialog.titleEdit.setMaxLength(31)
+        addbmkdialog.titleEdit.setText(self.tabWidget.currentWidget().page().mainFrame().title())
+        addbmkdialog.addressEdit.setText(self.line.text())
+        if (dialog.exec_() == QDialog.Accepted):
+            title = addbmkdialog.titleEdit.text()
+            addr = addbmkdialog.addressEdit.text()
+            imgfile = str(time()) + '.jpg'
+            viewportsize = self.tabWidget.currentWidget().page().viewportSize()
+            contentsize = QSize(640, 640)
+            self.tabWidget.currentWidget().page().setViewportSize(contentsize)
+            img = QPixmap(contentsize)
+            painter = QPainter(img)
+            self.tabWidget.currentWidget().page().mainFrame().render(painter, 0xff)# 0xff=QWebFrame.AllLayers
+            painter.end()
+            self.tabWidget.currentWidget().page().setViewportSize(viewportsize)
+            icon = img.scaledToWidth(184, 1).copy(0,0, 180, 120)
+            icon.save(thumbnails_dir + imgfile)
+            self.favourites = importFavourites(configdir + 'favourites.txt')
+            self.favourites.append([title, addr, imgfile])
+            exportFavourites(configdir + 'favourites.txt', self.favourites)
+
+    def addbookmark(self):
+        """ Opens add bookmark dialog and gets url from url box"""
+        dialog = QDialog(self)
+        addbmkdialog = Add_Bookmark_Dialog()
+        addbmkdialog.setupUi(dialog)
+        addbmkdialog.titleEdit.setText(self.tabWidget.currentWidget().page().mainFrame().title())
+        addbmkdialog.addressEdit.setText(self.line.text())
+        if (dialog.exec_() == QDialog.Accepted):
+            url = addbmkdialog.addressEdit.text()
+            bmk = [addbmkdialog.titleEdit.text(), url]
+            self.bookmarks = importBookmarks(configdir+"bookmarks.txt")
+            self.bookmarks.insert(0, bmk)
+            exportBookmarks(configdir+"bookmarks.txt", self.bookmarks)
+            icon = self.tabWidget.currentWidget().icon()
+            if not icon.isNull():
+                icon.pixmap(16, 16).save(icon_dir + url.split('/')[2] + '.png')
+
+    def managebookmarks(self):
+        """ Opens Bookmarks dialog """
+        dialog = QDialog(self)
+        bmk_dialog = Bookmarks_Dialog()
+        bmk_dialog.setupUi(dialog, self.bookmarks, self.favourites)
+        bmk_dialog.bookmarks_table.doubleclicked.connect(self.GoTo)
+        bmk_dialog.favs_table.doubleclicked.connect(self.GoTo)
+        dialog.exec_()
+        if bmk_dialog.bookmarks_table.data_changed:
+            self.bookmarks = bmk_dialog.bookmarks_table.data
+            exportBookmarks(configdir+"bookmarks.txt", self.bookmarks)
+        if bmk_dialog.favs_table.data_changed:
+            self.favourites = bmk_dialog.favs_table.data
+            exportFavourites(configdir+"favourites.txt", self.favourites)
+
+    def viewhistory(self):
+        """ Open history dialog """
+        dialog = QDialog(self)
+        history_dialog = History_Dialog()
+        history_dialog.setupUi(dialog, self.history)
+        history_dialog.tableView.doubleclicked.connect(self.GoTo)
+        dialog.exec_()
+
+    def findmode(self):
+        """ Starts find mode and unhides find buttons"""
+        webkit.find_mode_on = True
+        self.line.clear()
+        self.find.show()
+        self.findprev.show()
+        self.cancelfind.show()
+        self.line.setFocus()
+    def cancelfindmode(self):
+        """ Hides the find buttons, updates urlbox"""
+        webkit.find_mode_on = False
+        self.tabWidget.currentWidget().findText("")
+        self.find.hide()
+        self.findprev.hide()
+        self.cancelfind.hide()
+        self.line.setText(self.tabWidget.currentWidget().url().toString())
+    def findnext(self):
+        text = self.line.text()
+        self.tabWidget.currentWidget().findText(text)
+    def findback(self):
+        text = self.line.text()
+        self.tabWidget.currentWidget().findText(text, QWebPage.FindBackward)
+
+#####################  View Settings  ###################
+    def zoomin(self):
+        zoomlevel = self.tabWidget.currentWidget().textSizeMultiplier()
+        self.tabWidget.currentWidget().setTextSizeMultiplier(zoomlevel+0.1) # Use setZoomFactor() to zoom text and images
+    def zoomout(self):
+        zoomlevel = self.tabWidget.currentWidget().textSizeMultiplier()
+        self.tabWidget.currentWidget().setTextSizeMultiplier(zoomlevel-0.1)
+    def fullscreenmode(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
+
+    def loadimages(self, state):
+        """ TOggles image loading on/off"""
+        self.websettings.setAttribute(QWebSettings.AutoLoadImages, state)
+        self.loadimagesval = bool(state)
+
+    def setjavascript(self, state):
+        """ Toggles js on/off """
+        self.websettings.setAttribute(QWebSettings.JavascriptEnabled, state)
+        self.javascriptenabledval = bool(state)
+
+########################## Settings Portion #########################
+    def settingseditor(self):  
+        """ Opens the settings manager dialog, then applies the change"""
+        dialog = QDialog(self)
+        websettingsdialog = Ui_SettingsDialog()
+        websettingsdialog.setupUi(dialog)
+        # Enable AdBlock
+        websettingsdialog.checkAdBlock.setChecked(webkit.enable_adblock)
+        # Fonts blocking
+        websettingsdialog.checkFontLoad.setChecked(webkit.block_fonts)
+        # Popups blocking
+        websettingsdialog.checkBlockPopups.setChecked(webkit.block_popups)
+        # Custom user agent
+        websettingsdialog.checkUserAgent.setChecked(webkit.use_custom_useragent)
+        websettingsdialog.useragentEdit.setText(webkit.user_agent)
+        # External download manager
+        websettingsdialog.checkDownMan.setChecked(self.useexternaldownloader)
+        websettingsdialog.downManEdit.setText(self.externaldownloader)
+        # RTSP media player command
+        websettingsdialog.mediaPlayerEdit.setText(webkit.video_player_command)
+        websettingsdialog.mediaPlayerEdit.setCursorPosition(0)
+        # Maximize on startup
+        websettingsdialog.checkMaximize.setChecked(self.maximizeonstartup)
+        # Font settings
+        websettingsdialog.spinFontSize.setValue(self.minfontsizeval)
+        websettingsdialog.standardfontCombo.setCurrentFont(QFont(self.standardfontval))
+        websettingsdialog.sansfontCombo.setCurrentFont(QFont(self.sansfontval))
+        websettingsdialog.seriffontCombo.setCurrentFont(QFont(self.seriffontval))
+        websettingsdialog.fixedfontCombo.setCurrentFont(QFont(self.fixedfontval))
+        # Clear Data buttons
+        websettingsdialog.clearCacheButton.clicked.connect(self.websettings.clearMemoryCaches)
+        websettingsdialog.cookiesButton.clicked.connect(cookiejar.clearCookies)
+        websettingsdialog.iconDBButton.clicked.connect(self.websettings.clearIconDatabase)
+
+        if dialog.exec_() == QDialog.Accepted:
+            # Enable AdBlock
+            webkit.enable_adblock = websettingsdialog.checkAdBlock.isChecked()
+            # Block Fonts
+            webkit.block_fonts = websettingsdialog.checkFontLoad.isChecked()
+            # Block Popups
+            webkit.block_popups = websettingsdialog.checkBlockPopups.isChecked()
+            # User Agent
+            webkit.use_custom_useragent = websettingsdialog.checkUserAgent.isChecked()
+            webkit.user_agent = websettingsdialog.useragentEdit.text()
+            # Download Manager
+            self.useexternaldownloader = websettingsdialog.checkDownMan.isChecked()
+            self.externaldownloader = websettingsdialog.downManEdit.text()
+            # Media Player Command
+            webkit.video_player_command = websettingsdialog.mediaPlayerEdit.text()
+            # Maximize on startup
+            self.maximizeonstartup = websettingsdialog.checkMaximize.isChecked()
+
+            self.minfontsizeval = websettingsdialog.spinFontSize.value()
+            self.standardfontval = websettingsdialog.standardfontCombo.currentText()
+            self.sansfontval = websettingsdialog.sansfontCombo.currentText()
+            self.seriffontval = websettingsdialog.seriffontCombo.currentText()
+            self.fixedfontval = websettingsdialog.fixedfontCombo.currentText()
+            self.applysettings()
+            self.savesettings()
+    def opensettings(self): 
+        """ Reads settings file in ~/.config/quartz-browser/ directory and
+            saves values in settings variables"""
+        webkit.enable_adblock = _bool(self.settings.value('EnableAdblock', True))
+        self.loadimagesval = _bool(self.settings.value('LoadImages', True))
+        self.javascriptenabledval = _bool(self.settings.value('JavaScriptEnabled', True))
+        webkit.block_fonts = _bool(self.settings.value('BlockFontLoading', False))
+        webkit.block_popups = _bool(self.settings.value('BlockPopups', False))
+        webkit.use_custom_useragent = _bool(self.settings.value('CustomUserAgent', False))
+        webkit.user_agent = self.settings.value('UserAgent', "Nokia 5130")
+        self.useexternaldownloader = _bool(self.settings.value('UseExternalDownloader', False))
+        self.externaldownloader = self.settings.value('ExternalDownloader', "wget -c %u")
+        webkit.video_player_command = self.settings.value('MediaPlayerCommand', webkit.video_player_command)
+        self.maximizeonstartup = _bool(self.settings.value('MaximizeOnStartup', False))
+        self.minfontsizeval = int(self.settings.value('MinFontSize', 11))
+        self.standardfontval = self.settings.value('StandardFont', 'Sans')
+        self.sansfontval = self.settings.value('SansFont', 'Sans')
+        self.seriffontval = self.settings.value('SerifFont', 'Serif')
+        self.fixedfontval = self.settings.value('FixedFont', 'Monospace')
+    def savesettings(self):
+        """ Writes setings to disk in ~/.config/quartz-browser/ directory"""
+        self.settings.setValue('EnableAdblock', webkit.enable_adblock)
+        self.settings.setValue('LoadImages', self.loadimagesval)
+        self.settings.setValue('JavaScriptEnabled', self.javascriptenabledval)
+        self.settings.setValue('BlockFontLoading', webkit.block_fonts)
+        self.settings.setValue('BlockPopups', webkit.block_popups)
+        self.settings.setValue('CustomUserAgent', webkit.use_custom_useragent)
+        self.settings.setValue('UserAgent', webkit.user_agent)
+        self.settings.setValue('UseExternalDownloader', self.useexternaldownloader)
+        self.settings.setValue('ExternalDownloader', self.externaldownloader)
+        self.settings.setValue('MediaPlayerCommand', webkit.video_player_command)
+        self.settings.setValue('MaximizeOnStartup', self.maximizeonstartup)
+        self.settings.setValue('MinFontSize', self.minfontsizeval)
+        self.settings.setValue('StandardFont', self.standardfontval)
+        self.settings.setValue('SansFont', self.sansfontval)
+        self.settings.setValue('SerifFont', self.seriffontval)
+        self.settings.setValue('FixedFont', self.fixedfontval)
+    def applysettings(self):
+        """ Reads settings variables, and changes browser settings.This is run after
+            changing settings by Settings Dialog"""
+        if webkit.enable_adblock:
+            self.websettings.setUserStyleSheetUrl(QUrl.fromLocalFile(program_dir + 'userContent.css'))
+        else:
+            self.websettings.setUserStyleSheetUrl(QUrl(''))
+        self.websettings.setAttribute(QWebSettings.AutoLoadImages, self.loadimagesval)
+        self.loadimagesaction.setChecked(self.loadimagesval)
+        self.websettings.setAttribute(QWebSettings.JavascriptEnabled, self.javascriptenabledval)
+        self.javascriptmode.setChecked(self.javascriptenabledval)
+        self.websettings.setFontSize(QWebSettings.MinimumFontSize, self.minfontsizeval)
+        self.websettings.setFontFamily(QWebSettings.StandardFont, self.standardfontval)
+        self.websettings.setFontFamily(QWebSettings.SansSerifFont, self.sansfontval)
+        self.websettings.setFontFamily(QWebSettings.SerifFont, self.seriffontval)
+        self.websettings.setFontFamily(QWebSettings.FixedFont, self.fixedfontval)
+#        self.websettings.setFontSize(QWebSettings.DefaultFontSize, 14)
+
+    def forceClose(self):
+        self.confirm_before_quit = False
+        self.close()
+
+    def closeEvent(self, event):
+        """This saves all settings, bookmarks, cookies etc. during window close"""
+        if self.confirm_before_quit:
+            confirm = QMessageBox.warning(self, 'Quit Browser ?', 'Are you sure to close the Browser',
+                                                QMessageBox.Yes|QMessageBox.No, QMessageBox.Yes)
+            if confirm == QMessageBox.No :
+                event.ignore()
+                return
+        self.savesettings()
+        cookiejar.exportCookies()
+        # Delete excess thumbnails
+        thumbnails = [ x for x in os.listdir(thumbnails_dir) ]
+        for fav in self.favourites:
+            if fav[2] in thumbnails:
+                thumbnails.remove(fav[2])
+        for f in thumbnails: os.remove(thumbnails_dir + f)
+        # Delete excess icons
+        icons = [ x for x in os.listdir(icon_dir) if x.endswith('.png') ]
+        for bmk in self.bookmarks:
+            if bmk[1].split('/')[2] + '.png' in icons:
+                icons.remove(bmk[1].split('/')[2] + '.png')
+        for f in icons: os.remove( icon_dir + f )
+        super(Main, self).closeEvent(event)
+
+def download_externally(url, downloader):
+    """ Runs External downloader """
+    if "%u" not in str(downloader):
+        cmd = downloader + ' ' + url
+    else:
+        cmd = str(downloader).replace("%u", url)
+    cmd = shlex.split(cmd)
+    try:
+        subprocess.Popen(cmd)
+    except OSError:
+        QMessageBox.information(None, "Download Error", "Downloader command not found")
+
+def _bool(strng):
+    return True if strng=='true' else False
+
+class DownloadDialog(QDialog, download_confirm.Ui_downloadDialog):
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
+        self.folder = downloaddir
+        self.setupUi(self)
+        self.folderButton.clicked.connect(self.changeFolder)
+        self.labelFolder.setText(downloaddir)
+    def changeFolder(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Folder", homedir)
+        if not folder == '':
+            self.folder = folder + "/"
+            self.labelFolder.setText(self.folder)
+
+def main():
+    global app, networkmanager, cookiejar
+    app = QApplication(sys.argv)
+    app.setOrganizationName("quartz-browser")
+    app.setApplicationName("Quartz")
+    # NetworkAccessManager must be global variable, otherwise javascript will not be rendered
+    cookiejar = webkit.MyCookieJar(QApplication.instance())
+    networkmanager = webkit.NetworkAccessManager(QApplication.instance())
+    networkmanager.setCookieJar(cookiejar)
+    gui= Main()
+    # Maximize after startup or Show normal 
+    if gui.maximizeonstartup:
+        gui.showMaximized()
+    else:
+        gui.show()
+    # Go to url from argument
+    if len(sys.argv)> 1:
+        if sys.argv[1].startswith("/"):
+            url = "file://"+sys.argv[1]
+        else:
+            url = sys.argv[1]
+        gui.GoTo(url)
+    else:
+        gui.goToHome()
+    # App mainloop
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
+
