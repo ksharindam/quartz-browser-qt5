@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import ( QApplication, QMainWindow, QWidget,
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
 from PyQt5.QtNetwork import QNetworkRequest
 from PyQt5.QtWebKit import QWebSettings
-from PyQt5.QtWebKitWidgets import QWebPage
+from PyQt5.QtWebKitWidgets import QWebPage, QWebFrame
 
 from settings_dialog import Ui_SettingsDialog
 from bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
@@ -455,7 +455,7 @@ class Main(QMainWindow):
             QTimer.singleShot(5000, loop.quit)
             loop.exec_()
         if reply.hasRawHeader('Location'):
-            URL = QUrl.fromUserInput(reply.rawHeader('Location'))
+            URL = QUrl.fromUserInput(unicode(reply.rawHeader('Location')))
             reply.abort()
             reply = networkmanager.get(QNetworkRequest(URL))
             self.handleUnsupportedContent(reply, force_filename)
@@ -551,7 +551,7 @@ class Main(QMainWindow):
             return
         # For embeded HTML5 videos
         request = QNetworkRequest(self.video_URL)
-        request.setRawHeader('Referer', self.video_page_url)
+        request.setRawHeader('Referer', bytes(self.video_page_url))
         reply = networkmanager.get(request)
         self.handleUnsupportedContent(reply)
 
@@ -581,8 +581,8 @@ class Main(QMainWindow):
         title = self.tabWidget.currentWidget().page().mainFrame().title()
         title = validateFileName(title)
         filename = QFileDialog.getSaveFileName(self,
-                                      "Enter HTML File Name", downloaddir + title +".html",
-                                      "HTML Document (*.html)" )[0]
+                                "Enter HTML File Name", downloaddir + title +".html",
+                                "HTML Document (*.html)" )[0]
         if filename == '': return
         #html = self.tabWidget.currentWidget().page().mainFrame().toHtml()
         page_URL = self.tabWidget.currentWidget().url()
@@ -623,7 +623,7 @@ class Main(QMainWindow):
             self.tabWidget.currentWidget().page().setViewportSize(contentsize)
             img = QPixmap(contentsize)
             painter = QPainter(img)
-            self.tabWidget.currentWidget().page().mainFrame().render(painter, 0xff)# 0xff=QWebFrame.AllLayers
+            self.tabWidget.currentWidget().page().mainFrame().render(painter, QWebFrame.AllLayers)
             painter.end()
             self.tabWidget.currentWidget().page().setViewportSize(viewportsize)
             icon = img.scaledToWidth(184, 1).copy(0,0, 180, 120)

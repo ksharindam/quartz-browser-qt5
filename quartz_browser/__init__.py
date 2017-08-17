@@ -18,6 +18,7 @@ Features =  Change User agent to mobile/desktop
             Youtube Video and HTML5 video downloader.
 Last Update :
             fixed : Could not download html video which requires Referer header.
+            fixed : Crash on clicking Add to homepage
             
 
 ...........................................................................
@@ -46,7 +47,7 @@ Last Update :
 #       replce + by %2B in search engine.
 import os
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
