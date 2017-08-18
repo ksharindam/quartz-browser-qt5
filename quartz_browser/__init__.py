@@ -19,6 +19,7 @@ Features =  Change User agent to mobile/desktop
 Last Update :
             fixed : Could not download html video which requires Referer header.
             fixed : Crash on clicking Add to homepage
+            fixed : Crash on zoom text
             
 
 ...........................................................................
@@ -47,7 +48,7 @@ Last Update :
 #       replce + by %2B in search engine.
 import os
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"

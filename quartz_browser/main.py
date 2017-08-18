@@ -697,11 +697,11 @@ class Main(QMainWindow):
 
 #####################  View Settings  ###################
     def zoomin(self):
-        zoomlevel = self.tabWidget.currentWidget().textSizeMultiplier()
-        self.tabWidget.currentWidget().setTextSizeMultiplier(zoomlevel+0.1) # Use setZoomFactor() to zoom text and images
+        zoomlevel = self.tabWidget.currentWidget().zoomFactor()
+        self.tabWidget.currentWidget().setZoomFactor(zoomlevel+0.1) # Use setZoomFactor() to zoom text and images
     def zoomout(self):
-        zoomlevel = self.tabWidget.currentWidget().textSizeMultiplier()
-        self.tabWidget.currentWidget().setTextSizeMultiplier(zoomlevel-0.1)
+        zoomlevel = self.tabWidget.currentWidget().zoomFactor()
+        self.tabWidget.currentWidget().setZoomFactor(zoomlevel-0.1)
     def fullscreenmode(self):
         if self.isFullScreen():
             self.showNormal()
