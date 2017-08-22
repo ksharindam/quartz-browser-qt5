@@ -739,8 +739,6 @@ class Main(QMainWindow):
         # RTSP media player command
         websettingsdialog.mediaPlayerEdit.setText(webkit.video_player_command)
         websettingsdialog.mediaPlayerEdit.setCursorPosition(0)
-        # Maximize on startup
-        websettingsdialog.checkMaximize.setChecked(self.maximizeonstartup)
         # Font settings
         websettingsdialog.spinFontSize.setValue(self.minfontsizeval)
         websettingsdialog.standardfontCombo.setCurrentFont(QFont(self.standardfontval))
@@ -767,8 +765,6 @@ class Main(QMainWindow):
             self.externaldownloader = websettingsdialog.downManEdit.text()
             # Media Player Command
             webkit.video_player_command = websettingsdialog.mediaPlayerEdit.text()
-            # Maximize on startup
-            self.maximizeonstartup = websettingsdialog.checkMaximize.isChecked()
 
             self.minfontsizeval = websettingsdialog.spinFontSize.value()
             self.standardfontval = websettingsdialog.standardfontCombo.currentText()
@@ -790,7 +786,7 @@ class Main(QMainWindow):
         self.useexternaldownloader = _bool(self.settings.value('UseExternalDownloader', False))
         self.externaldownloader = self.settings.value('ExternalDownloader', "wget -c %u")
         webkit.video_player_command = self.settings.value('MediaPlayerCommand', webkit.video_player_command)
-        self.maximizeonstartup = _bool(self.settings.value('MaximizeOnStartup', False))
+        self.maximize_window = _bool(self.settings.value('MaximizeWindow', False))
         self.minfontsizeval = int(self.settings.value('MinFontSize', 11))
         self.standardfontval = self.settings.value('StandardFont', 'Sans')
         self.sansfontval = self.settings.value('SansFont', 'Sans')
@@ -808,7 +804,7 @@ class Main(QMainWindow):
         self.settings.setValue('UseExternalDownloader', self.useexternaldownloader)
         self.settings.setValue('ExternalDownloader', self.externaldownloader)
         self.settings.setValue('MediaPlayerCommand', webkit.video_player_command)
-        self.settings.setValue('MaximizeOnStartup', self.maximizeonstartup)
+        self.settings.setValue('MaximizeWindow', self.isMaximized())
         self.settings.setValue('MinFontSize', self.minfontsizeval)
         self.settings.setValue('StandardFont', self.standardfontval)
         self.settings.setValue('SansFont', self.sansfontval)
@@ -897,21 +893,21 @@ def main():
     cookiejar = webkit.MyCookieJar(QApplication.instance())
     networkmanager = webkit.NetworkAccessManager(QApplication.instance())
     networkmanager.setCookieJar(cookiejar)
-    gui= Main()
+    window = Main()
     # Maximize after startup or Show normal 
-    if gui.maximizeonstartup:
-        gui.showMaximized()
+    if window.maximize_window:
+        window.showMaximized()
     else:
-        gui.show()
+        window.show()
     # Go to url from argument
     if len(sys.argv)> 1:
         if sys.argv[1].startswith("/"):
             url = "file://"+sys.argv[1]
         else:
             url = sys.argv[1]
-        gui.GoTo(url)
+        window.GoTo(url)
     else:
-        gui.goToHome()
+        window.goToHome()
     # App mainloop
     sys.exit(app.exec_())
 

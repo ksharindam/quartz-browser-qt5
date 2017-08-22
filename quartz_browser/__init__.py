@@ -17,7 +17,8 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Last Update :
-            fixed : Crash when all download items are removed.
+            removed : mazimize of startup option in settings dialog.
+            Remembers previous window state when closing the window.
             
 
 ...........................................................................
@@ -46,7 +47,7 @@ Last Update :
 #       replce + by %2B in search engine.
 import os
 
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
