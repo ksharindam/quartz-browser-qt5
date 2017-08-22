@@ -19,6 +19,7 @@ Features =  Change User agent to mobile/desktop
 Last Update :
             removed : mazimize of startup option in settings dialog.
             Remembers previous window state when closing the window.
+            Added : useragent changing option to main menu
             
 
 ...........................................................................

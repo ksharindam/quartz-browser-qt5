@@ -13,8 +13,8 @@ enable_adblock = True
 block_fonts = False
 block_popups = False
 find_mode_on = False
-use_custom_useragent = False
-user_agent = ''
+useragent_mode = 'Desktop'
+useragent_custom = 'Chromium 34.0'
 video_player_command = 'mplayer --fs'
 
 blocklist = program_dir + 'blocklist.txt'
@@ -103,13 +103,16 @@ class MyWebPage(QWebPage):
         self.setForwardUnsupportedContent(True)
         self.setLinkDelegationPolicy(2)
         self.setNetworkAccessManager(networkmanager)
-        self.useragent = QWebPage.userAgentForUrl(self, QUrl())
+        self.useragent_desktop = QWebPage.userAgentForUrl(self, QUrl())
+        self.useragent_mobile = 'Nokia 5130'
 
     def userAgentForUrl(self, url):
         """ This is called when it loads any page, to get useragent string"""
-        if use_custom_useragent:
-            return user_agent
-        return self.useragent
+        if useragent_mode == 'Mobile':
+            return self.useragent_mobile
+        elif useragent_mode == 'Custom':
+            return useragent_custom
+        return self.useragent_desktop
 
     def extension(self, extension, option, output):
         """ Allows to upload files where multiple selections are allowed """

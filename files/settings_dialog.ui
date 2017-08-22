@@ -39,20 +39,13 @@
         </widget>
        </item>
        <item row="4" column="0" colspan="2">
-        <widget class="QCheckBox" name="checkUserAgent">
-         <property name="text">
-          <string>Custom User Agent</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0" colspan="2">
         <widget class="QLineEdit" name="useragentEdit">
          <property name="placeholderText">
-          <string>Example: Nokia 5130</string>
+          <string>Example: Firefox 40.0</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="0" colspan="2">
+       <item row="7" column="0" colspan="2">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -72,6 +65,13 @@
          </property>
          <property name="text">
           <string>Block Popup Tabs</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_UserAgent">
+         <property name="text">
+          <string>Custom UserAgent :</string>
          </property>
         </widget>
        </item>

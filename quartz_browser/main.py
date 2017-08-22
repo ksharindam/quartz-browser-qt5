@@ -105,7 +105,27 @@ class Main(QMainWindow):
         self.javascriptmode.setCheckable(True)
         self.javascriptmode.triggered.connect(self.setjavascript)
 
+        self.useragent_mode_desktop = QAction("Desktop",self)
+        self.useragent_mode_desktop.setCheckable(True)
+        self.useragent_mode_desktop.triggered.connect(self.setUserAgentDesktop)
+
+        self.useragent_mode_mobile = QAction("Mobile",self)
+        self.useragent_mode_mobile.setCheckable(True)
+        self.useragent_mode_mobile.triggered.connect(self.setUserAgentMobile)
+
+        self.useragent_mode_custom = QAction("Custom",self)
+        self.useragent_mode_custom.setCheckable(True)
+        self.useragent_mode_custom.triggered.connect(self.setUserAgentCustom)
+
 ################ Add Actions to Menu ####################
+        # This sub-menu sets useragent mode to desktop/mobile/custom
+        self.useragentMenu = QMenu('UserAgent', self)
+        self.useragentMenu.setIcon(QIcon.fromTheme("computer"))
+        self.useragentMenu.addAction(self.useragent_mode_desktop)
+        self.useragentMenu.addAction(self.useragent_mode_mobile)
+        self.useragentMenu.addAction(self.useragent_mode_custom)
+
+        # This is main menu
         self.menu = QMenu(self)
         self.menu.addAction(QIcon.fromTheme("edit-find"), "Find Text", self.findmode, "Ctrl+F")
         self.menu.addAction(QIcon.fromTheme("list-add"), "Zoom In", self.zoomin, "Ctrl++")
@@ -115,6 +135,7 @@ class Main(QMainWindow):
 
         self.menu.addAction(self.loadimagesaction)
         self.menu.addAction(self.javascriptmode)
+        self.menu.addMenu(self.useragentMenu)
         self.menu.addAction(QIcon.fromTheme("applications-system"), "Settings", self.settingseditor, "Ctrl+,")
         self.menu.addSeparator()
 
@@ -586,7 +607,7 @@ class Main(QMainWindow):
         if filename == '': return
         #html = self.tabWidget.currentWidget().page().mainFrame().toHtml()
         page_URL = self.tabWidget.currentWidget().url()
-        useragent = self.tabWidget.currentWidget().page().userAgentForUrl(QUrl())
+        useragent = self.tabWidget.currentWidget().page().userAgentForUrl(page_URL)
         doc = self.tabWidget.currentWidget().page().mainFrame().documentElement().clone()
         #doc.setInnerXml(html)
         SaveAsHtml(networkmanager, doc, filename, page_URL, useragent)
@@ -718,6 +739,24 @@ class Main(QMainWindow):
         self.websettings.setAttribute(QWebSettings.JavascriptEnabled, state)
         self.javascriptenabledval = bool(state)
 
+    def setUserAgentDesktop(self, checked):
+        if bool(checked):
+            webkit.useragent_mode = 'Desktop'
+            self.useragent_mode_mobile.setChecked(False)
+            self.useragent_mode_custom.setChecked(False)
+
+    def setUserAgentMobile(self, checked):
+        if bool(checked):
+            webkit.useragent_mode = 'Mobile'
+            self.useragent_mode_desktop.setChecked(False)
+            self.useragent_mode_custom.setChecked(False)
+
+    def setUserAgentCustom(self, checked):
+        if bool(checked):
+            webkit.useragent_mode = 'Custom'
+            self.useragent_mode_mobile.setChecked(False)
+            self.useragent_mode_desktop.setChecked(False)
+
 ########################## Settings Portion #########################
     def settingseditor(self):  
         """ Opens the settings manager dialog, then applies the change"""
@@ -731,8 +770,7 @@ class Main(QMainWindow):
         # Popups blocking
         websettingsdialog.checkBlockPopups.setChecked(webkit.block_popups)
         # Custom user agent
-        websettingsdialog.checkUserAgent.setChecked(webkit.use_custom_useragent)
-        websettingsdialog.useragentEdit.setText(webkit.user_agent)
+        websettingsdialog.useragentEdit.setText(webkit.useragent_custom)
         # External download manager
         websettingsdialog.checkDownMan.setChecked(self.useexternaldownloader)
         websettingsdialog.downManEdit.setText(self.externaldownloader)
@@ -758,8 +796,7 @@ class Main(QMainWindow):
             # Block Popups
             webkit.block_popups = websettingsdialog.checkBlockPopups.isChecked()
             # User Agent
-            webkit.use_custom_useragent = websettingsdialog.checkUserAgent.isChecked()
-            webkit.user_agent = websettingsdialog.useragentEdit.text()
+            webkit.useragent_custom = websettingsdialog.useragentEdit.text()
             # Download Manager
             self.useexternaldownloader = websettingsdialog.checkDownMan.isChecked()
             self.externaldownloader = websettingsdialog.downManEdit.text()
@@ -781,8 +818,8 @@ class Main(QMainWindow):
         self.javascriptenabledval = _bool(self.settings.value('JavaScriptEnabled', True))
         webkit.block_fonts = _bool(self.settings.value('BlockFontLoading', False))
         webkit.block_popups = _bool(self.settings.value('BlockPopups', False))
-        webkit.use_custom_useragent = _bool(self.settings.value('CustomUserAgent', False))
-        webkit.user_agent = self.settings.value('UserAgent', "Nokia 5130")
+        webkit.useragent_mode = self.settings.value('UserAgentMode', webkit.useragent_mode)
+        webkit.useragent_custom = self.settings.value('UserAgent', webkit.useragent_custom)
         self.useexternaldownloader = _bool(self.settings.value('UseExternalDownloader', False))
         self.externaldownloader = self.settings.value('ExternalDownloader', "wget -c %u")
         webkit.video_player_command = self.settings.value('MediaPlayerCommand', webkit.video_player_command)
@@ -799,8 +836,8 @@ class Main(QMainWindow):
         self.settings.setValue('JavaScriptEnabled', self.javascriptenabledval)
         self.settings.setValue('BlockFontLoading', webkit.block_fonts)
         self.settings.setValue('BlockPopups', webkit.block_popups)
-        self.settings.setValue('CustomUserAgent', webkit.use_custom_useragent)
-        self.settings.setValue('UserAgent', webkit.user_agent)
+        self.settings.setValue('UserAgent', webkit.useragent_custom)
+        self.settings.setValue('UserAgentMode', webkit.useragent_mode)
         self.settings.setValue('UseExternalDownloader', self.useexternaldownloader)
         self.settings.setValue('ExternalDownloader', self.externaldownloader)
         self.settings.setValue('MediaPlayerCommand', webkit.video_player_command)
@@ -821,6 +858,12 @@ class Main(QMainWindow):
         self.loadimagesaction.setChecked(self.loadimagesval)
         self.websettings.setAttribute(QWebSettings.JavascriptEnabled, self.javascriptenabledval)
         self.javascriptmode.setChecked(self.javascriptenabledval)
+        if webkit.useragent_mode == 'Mobile':
+            self.useragent_mode_mobile.setChecked(True)
+        elif webkit.useragent_mode == 'Custom':
+            self.useragent_mode_custom.setChecked(True)
+        else:
+            self.useragent_mode_desktop.setChecked(True)
         self.websettings.setFontSize(QWebSettings.MinimumFontSize, self.minfontsizeval)
         self.websettings.setFontFamily(QWebSettings.StandardFont, self.standardfontval)
         self.websettings.setFontFamily(QWebSettings.SansSerifFont, self.sansfontval)
