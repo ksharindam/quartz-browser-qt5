@@ -69,8 +69,8 @@ def importDownloads(filename):
 def exportDownloads(filepath, downloads):
     dl_text = ''
     for [filename, url, filesize, timestamp] in downloads:
-        dl_text = unicode(dl_text+filename+'\n'+url+'\n'+filesize+'\n'+timestamp+'\n')
+        dl_text = dl_text + filename+'\n' + url+'\n' + filesize+'\n' + timestamp+'\n'
     dl_file = io.open(filepath, 'w', encoding='utf-8')
-    dl_file.write(dl_text)
+    dl_file.write(unicode(dl_text))
     dl_file.close()
 

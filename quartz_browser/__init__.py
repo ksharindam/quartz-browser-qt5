@@ -17,9 +17,7 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Last Update :
-            fixed : Could not download html video which requires Referer header.
-            fixed : Crash on clicking Add to homepage
-            fixed : Crash on zoom text
+            fixed : Crash when all download items are removed.
             
 
 ...........................................................................
@@ -48,7 +46,7 @@ Last Update :
 #       replce + by %2B in search engine.
 import os
 
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
