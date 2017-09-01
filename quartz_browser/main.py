@@ -59,7 +59,7 @@ class Main(QMainWindow):
                 os.mkdir(folder)
         # Import and Apply Settings
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.settings = QSettings(1, 0, "quartz-browser","quartz", self)
+        self.settings = QSettings(1, 0, "quartz-browser","Quartz", self)
         self.opensettings()
         self.websettings = QWebSettings.globalSettings()
         self.websettings.setAttribute(QWebSettings.DnsPrefetchEnabled, True)
@@ -821,7 +821,7 @@ class Main(QMainWindow):
         webkit.useragent_mode = self.settings.value('UserAgentMode', webkit.useragent_mode)
         webkit.useragent_custom = self.settings.value('UserAgent', webkit.useragent_custom)
         self.useexternaldownloader = _bool(self.settings.value('UseExternalDownloader', False))
-        self.externaldownloader = self.settings.value('ExternalDownloader', "wget -c %u")
+        self.externaldownloader = self.settings.value('ExternalDownloader', "x-terminal-emulator wget -c %u")
         webkit.video_player_command = self.settings.value('MediaPlayerCommand', webkit.video_player_command)
         self.maximize_window = _bool(self.settings.value('MaximizeWindow', False))
         self.minfontsizeval = int(self.settings.value('MinFontSize', 11))
@@ -912,7 +912,9 @@ def download_externally(url, downloader):
         QMessageBox.information(None, "Download Error", "Downloader command not found")
 
 def _bool(strng):
-    return True if strng=='true' else False
+    if type(strng) == unicode :
+        return True if strng=='true' else False
+    return bool(strng)
 
 class DownloadDialog(QDialog, download_confirm.Ui_downloadDialog):
     def __init__(self, parent):

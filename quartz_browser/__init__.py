@@ -21,6 +21,7 @@ Last Update :
             Remembers previous window state when closing the window.
             Added : useragent changing option to main menu
             Fixed : crash for wrong media player command while playing rtsp video.
+            Fixed : _bool() function always returned false when argument was bool type.
             
 
 ...........................................................................
