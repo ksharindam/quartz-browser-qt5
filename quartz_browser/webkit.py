@@ -15,7 +15,7 @@ block_popups = False
 find_mode_on = False
 useragent_mode = 'Desktop'
 useragent_custom = 'Chromium 34.0'
-video_player_command = 'mplayer --fs'
+video_player_command = 'mpv --fs'
 
 blocklist = program_dir + 'blocklist.txt'
 
@@ -171,7 +171,10 @@ class MyWebView(QWebView):
         if addr.startswith('rtsp://'):
             global video_player_command
             cmd = unicode(video_player_command + ' ' + addr)
-            subprocess.Popen(shlex.split(cmd))
+            try:
+                subprocess.Popen(shlex.split(cmd))
+            except OSError:
+                QMessageBox.warning(self, "Command not Found !","The video player command not found.\nGoto Settings > Download & media and change command.")
             return
         self.load(url)
 

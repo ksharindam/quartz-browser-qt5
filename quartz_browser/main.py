@@ -59,7 +59,7 @@ class Main(QMainWindow):
                 os.mkdir(folder)
         # Import and Apply Settings
         self.setAttribute(Qt.WA_DeleteOnClose)
-        self.settings = QSettings(1, 0, "quartz-browser","Quartz", self)
+        self.settings = QSettings(1, 0, "quartz-browser","quartz", self)
         self.opensettings()
         self.websettings = QWebSettings.globalSettings()
         self.websettings.setAttribute(QWebSettings.DnsPrefetchEnabled, True)

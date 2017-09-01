@@ -17,9 +17,10 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Last Update :
-            removed : mazimize of startup option in settings dialog.
+            removed : maximize of startup option in settings dialog.
             Remembers previous window state when closing the window.
             Added : useragent changing option to main menu
+            Fixed : crash for wrong media player command while playing rtsp video.
             
 
 ...........................................................................
@@ -44,8 +45,8 @@ Last Update :
 #       Multiple search engines
 #       pytube in seperate thread
 # FIXME : 
-#       remove all unicode(QString) like functions
 #       replce + by %2B in search engine.
+
 import os
 
 __version__ = "2.0.4"
