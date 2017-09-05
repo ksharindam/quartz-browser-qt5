@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# FIXME : python list.sort() function is deprecated, use list.sorted() in python 3
-
-import sys, os, resources
+import sys, os
+from . import resources
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.Qt import QItemSelectionModel
@@ -35,8 +34,8 @@ class UrlBox(QLineEdit):
 
 
 class BookmarksTable(QTableWidget):
-    doubleclicked = QtCore.pyqtSignal(unicode)
-    urlSelected = QtCore.pyqtSignal(unicode)
+    doubleclicked = QtCore.pyqtSignal(str)
+    urlSelected = QtCore.pyqtSignal(str)
     def __init__(self, parent, item_list, use_icons=False):
         QTableWidget.__init__(self, len(item_list), 1, parent)
         self.itemSelectionChanged.connect(self.onSelection)
@@ -113,8 +112,8 @@ class BookmarksTable(QTableWidget):
         edit_dialog.addressEdit.setText(addr)
         dialog.setWindowTitle('Edit Item')
         if (dialog.exec_() == QDialog.Accepted):
-            title = unicode(edit_dialog.titleEdit.text())
-            self.data[row][0], self.data[row][1] = title, unicode(edit_dialog.addressEdit.text())
+            title = str(edit_dialog.titleEdit.text())
+            self.data[row][0], self.data[row][1] = title, str(edit_dialog.addressEdit.text())
             self.item(row, 0).setText(title)
             self.data_changed = True
 

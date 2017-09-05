@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __init__ import __version__, homedir, downloaddir, program_dir
+from . import __version__, homedir, downloaddir, program_dir
 import sys, shlex, os, re, subprocess
 from time import time
-from urlparse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs
 
 from PyQt5.Qt import QStringListModel
 from PyQt5.QtCore import ( QUrl, pyqtSignal, Qt, QSettings, QSize, QPoint )
@@ -21,13 +20,13 @@ from PyQt5.QtNetwork import QNetworkRequest
 from PyQt5.QtWebKit import QWebSettings
 from PyQt5.QtWebKitWidgets import QWebPage, QWebFrame
 
-from settings_dialog import Ui_SettingsDialog
-from bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
-from import_export import *
-from download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
-import download_confirm, youtube_dialog
-import resources, webkit
-from pytube.api import YouTube
+from .settings_dialog import Ui_SettingsDialog
+from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
+from .import_export import *
+from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
+from . import download_confirm, youtube_dialog
+from . import resources, webkit
+from .pytube.api import YouTube
 
 docdir = homedir+"/Documents/"
 configdir = homedir+"/.config/quartz-browser/"
@@ -41,7 +40,9 @@ def validYoutubeUrl(url):
     if youtube_regex.match(url):
         return True
 
-
+# Converts QByteArray to python str object
+def _str(byte_array):
+    return bytes(byte_array).decode('utf-8')
 
 class Main(QMainWindow):
     def __init__(self): 
@@ -430,7 +431,7 @@ class Main(QMainWindow):
                 if text in url:
                     suggestions.insert(0, url)
             for [title, address] in self.bookmarks:
-                if str(text) in address:
+                if text in address:
                     suggestions.insert(0, address)
         self.listmodel.setStringList( suggestions )
 
@@ -475,16 +476,16 @@ class Main(QMainWindow):
             reply.metaDataChanged.connect(loop.quit)
             QTimer.singleShot(5000, loop.quit)
             loop.exec_()
-        if reply.hasRawHeader('Location'):
-            URL = QUrl.fromUserInput(unicode(reply.rawHeader('Location')))
+        if reply.hasRawHeader(b'Location'):
+            URL = QUrl.fromUserInput(_str(reply.rawHeader(b'Location')))
             reply.abort()
             reply = networkmanager.get(QNetworkRequest(URL))
             self.handleUnsupportedContent(reply, force_filename)
             return
         for (title, header) in reply.rawHeaderPairs():
-            print( title+"-> "+header )
+            print( _str(title) + "-> " + _str(header) )
         # Get filename
-        content_name = str(reply.rawHeader('Content-Disposition'))
+        content_name = _str(reply.rawHeader(b'Content-Disposition'))
         if force_filename:
             filename = force_filename
         elif 'filename=' in content_name or 'filename*=' in content_name:
@@ -503,7 +504,7 @@ class Main(QMainWindow):
         dlDialog = DownloadDialog(self)
         dlDialog.filenameEdit.setText(filename)
         # Get filesize
-        if reply.hasRawHeader('Content-Length'):
+        if reply.hasRawHeader(b'Content-Length'):
             filesize = reply.header(1)
             if filesize >= 1048576 :
                 file_size = "{} M".format(round(float(filesize)/1048576, 2))
@@ -513,9 +514,9 @@ class Main(QMainWindow):
                 file_size = "{} B".format(filesize)
             dlDialog.labelFileSize.setText(file_size)
         # Get filetype and resume support info
-        if reply.hasRawHeader('Content-Type'):
-            dlDialog.labelFileType.setText(str(reply.rawHeader('Content-Type')))
-        if reply.hasRawHeader('Accept-Ranges') or reply.hasRawHeader('Content-Range'):
+        if reply.hasRawHeader(b'Content-Type'):
+            dlDialog.labelFileType.setText(_str(reply.rawHeader(b'Content-Type')))
+        if reply.hasRawHeader(b'Accept-Ranges') or reply.hasRawHeader(b'Content-Range'):
             dlDialog.labelResume.setText("True")
         # Execute dialog and show confirmation
         if dlDialog.exec_()== QDialog.Accepted:
@@ -572,7 +573,7 @@ class Main(QMainWindow):
             return
         # For embeded HTML5 videos
         request = QNetworkRequest(self.video_URL)
-        request.setRawHeader('Referer', bytes(self.video_page_url))
+        request.setRawHeader(b'Referer', self.video_page_url.encode('utf-8'))
         reply = networkmanager.get(request)
         self.handleUnsupportedContent(reply)
 
@@ -901,10 +902,10 @@ class Main(QMainWindow):
 
 def download_externally(url, downloader):
     """ Runs External downloader """
-    if "%u" not in str(downloader):
+    if "%u" not in downloader:
         cmd = downloader + ' ' + url
     else:
-        cmd = str(downloader).replace("%u", url)
+        cmd = downloader.replace("%u", url)
     cmd = shlex.split(cmd)
     try:
         subprocess.Popen(cmd)
@@ -912,7 +913,7 @@ def download_externally(url, downloader):
         QMessageBox.information(None, "Download Error", "Downloader command not found")
 
 def _bool(strng):
-    if type(strng) == unicode :
+    if type(strng) == str :
         return True if strng=='true' else False
     return bool(strng)
 

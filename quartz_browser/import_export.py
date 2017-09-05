@@ -45,7 +45,7 @@ def importFavourites(filename):
 def exportFavourites(filename, favs):
     favfile = io.open(filename, 'w', encoding='utf-8')
     for [title, addr, icon] in favs:
-        fav = unicode(title + "\n" + addr + "\n" + icon + '\n')
+        fav = str(title + "\n" + addr + "\n" + icon + '\n')
         favfile.write(fav)
     favfile.close()
 
@@ -71,6 +71,6 @@ def exportDownloads(filepath, downloads):
     for [filename, url, filesize, timestamp] in downloads:
         dl_text = dl_text + filename+'\n' + url+'\n' + filesize+'\n' + timestamp+'\n'
     dl_file = io.open(filepath, 'w', encoding='utf-8')
-    dl_file.write(unicode(dl_text))
+    dl_file.write(str(dl_text))
     dl_file.close()
 

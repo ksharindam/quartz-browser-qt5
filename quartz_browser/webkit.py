@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QInputDialog, QLineEdit, QFileDialog, 
 from PyQt5.QtWebKitWidgets import QWebPage, QWebView
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkCookie, QNetworkCookieJar, QNetworkAccessManager
 
-from __init__ import __version__, homedir, downloaddir, program_dir
+from . import __version__, homedir, downloaddir, program_dir
 import os, shlex, subprocess
 
 js_debug_mode = False
@@ -15,7 +15,7 @@ block_popups = False
 find_mode_on = False
 useragent_mode = 'Desktop'
 useragent_custom = 'Chromium 34.0'
-video_player_command = 'mpv --fs'
+video_player_command = 'ffplay'
 
 blocklist = program_dir + 'blocklist.txt'
 
@@ -23,6 +23,9 @@ with open(blocklist, 'r') as ab_file:
     lines = ab_file.readlines()
     ad_strings = [line.rstrip() for line in lines]
 
+
+def _str(byte_array):
+    return bytes(byte_array).decode('utf-8')
 
 class MyCookieJar(QNetworkCookieJar):
     """ Reimplemented QNetworkCookieJar to get cookie import/export feature"""
@@ -41,7 +44,7 @@ class MyCookieJar(QNetworkCookieJar):
         cookiesArray = QByteArray()
         cookieList = self.allCookies()
         for cookie in cookieList:
-            cookiesArray.append( cookie.toRawForm() + "\n" )
+            cookiesArray.append( bytes(cookie.toRawForm()).decode('utf-8') + "\n" ) # cookie.ToRawForm() returns ByteArray
         settings = QSettings('quartz-browser', 'cookies', self)
         settings.setValue("Cookies", cookiesArray)
 
@@ -65,7 +68,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         """ Reimplemented to enable adblock/url-block """
         if op!=self.GetOperation or request.url().scheme()=='file':
             return QNetworkAccessManager.createRequest(self, op, request, device)
-        url = unicode(request.url().toString())
+        url = request.url().toString()
         block = False
         # Font blocking capability
         if block_fonts:
@@ -89,10 +92,10 @@ class NetworkAccessManager(QNetworkAccessManager):
     def gotMetadata(self):
         ''' Prints raw Headers of requested url '''
         reply = self.sender()
-        #if reply.rawHeader('Content-Type') == r'audio/mpeg': reply.abort()
+        #if _str(reply.rawHeader(b'Content-Type')) == r'audio/mpeg': reply.abort()
         #print(reply.url().toString())
-        #print reply.rawHeader('Content-Type')
-        if 'javascript' in reply.rawHeader('Content-Type'):
+        #print( _str(reply.rawHeader(b'Content-Type')))
+        if 'javascript' in _str(reply.rawHeader(b'Content-Type')):
             print(reply.url().toString())
 
 
@@ -170,7 +173,7 @@ class MyWebView(QWebView):
         # This supports rtsp video play protocol
         if addr.startswith('rtsp://'):
             global video_player_command
-            cmd = unicode(video_player_command + ' ' + addr)
+            cmd = video_player_command + ' ' + addr
             try:
                 subprocess.Popen(shlex.split(cmd))
             except OSError:
@@ -194,7 +197,7 @@ class MyWebView(QWebView):
         element = result.element()
         child = element.firstChild()
         src = ''
-        print(element.toOuterXml())
+        #print(element.toOuterXml())
         if element.hasAttribute('src'):
             src = element.attribute('src')
         elif child.hasAttribute('src'):
@@ -249,7 +252,7 @@ class MyWebView(QWebView):
         # FIXME :url.setQueryItems([]) alternative
         filepath = url.toString()
         if QFileInfo(filepath).suffix() not in ['jpg', 'jpeg', 'png'] :
-            filepath = os.path.splitext(unicode(filepath))[0] + '.jpg'
+            filepath = os.path.splitext(filepath)[0] + '.jpg'
         filepath = QFileDialog.getSaveFileName(self,
                                       "Select Image to Save", downloaddir + QFileInfo(filepath).fileName(),
                                       "All Images (*.jpg *.jpeg *.png);;JPEG File (*.jpg);;PNG File (*.png)" )[0]
@@ -304,7 +307,7 @@ class UrlEdit(QLineEdit):
     def onReturnPress(self):
         if find_mode_on:
             return
-        text = unicode(self.text())
+        text = self.text()
         if validUrl(text) or text == 'about:home':
             self.openUrlRequested.emit()
             return

@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import os, time, resources, re, io
+import os, time, re, io
+from . import resources
 from subprocess import Popen
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import ( QApplication, QTableView, QTableWidget, QHeaderView,
     QMessageBox, QMenu, QVBoxLayout, QDialogButtonBox, QSystemTrayIcon )
 from PyQt5.QtNetwork import QNetworkRequest
+
+def _str(byte_array):
+    return bytes(byte_array).decode('utf-8')
 
 
 class Download(QtCore.QObject):
@@ -90,7 +94,7 @@ class Download(QtCore.QObject):
         if self.support_resume:
             self.loadedsize = self.file.size()
             if str(self.loadedsize) == self.totalsize : return
-            request.setRawHeader('Range', 'bytes={}-'.format(self.loadedsize) )
+            request.setRawHeader(b'Range', 'bytes={}-'.format(self.loadedsize).encode('ascii') )
         else:
             self.file.resize(0)
             self.loadedsize = 0
@@ -101,7 +105,7 @@ class Download(QtCore.QObject):
         self.loadedsize += self.download.size()
         self.downloadBuffer += self.download.readAll()
         if self.totalsize!='Unknown' and self.totalsize!=0:
-          self.progress = "{}%".format(int((float(self.loadedsize)/long(self.totalsize))*100))
+          self.progress = "{}%".format(int((float(self.loadedsize)/int(self.totalsize))*100))
         else:
           self.progress = "Unknown"
         self.datachanged.emit()
@@ -132,15 +136,15 @@ class Download(QtCore.QObject):
     def updateMetaData(self):
         """ Updates download header data in download (Resume support, url, Size)"""
         # Update Url path
-        if self.download.hasRawHeader('Location'):
-            self.url = str(self.download.rawHeader('Location'))
+        if self.download.hasRawHeader(b'Location'):
+            self.url = _str(self.download.rawHeader(b'Location'))
         else:
             self.url = self.download.url().toString()
         # Update total size
-        if self.totalsize=='Unknown' and self.download.hasRawHeader('Content-Length'):
+        if self.totalsize=='Unknown' and self.download.hasRawHeader(b'Content-Length'):
             self.totalsize = self.download.header(1)
         # Update pause/resume support
-        if self.download.hasRawHeader('Accept-Ranges') or self.download.hasRawHeader('Content-Range'):
+        if self.download.hasRawHeader(b'Accept-Ranges') or self.download.hasRawHeader(b'Content-Range'):
             self.support_resume = True
         else:
             self.support_resume = False
@@ -198,9 +202,9 @@ class DownloadsModel(QtCore.QAbstractTableModel):
     def formatFileSize(self, filesize):
         if filesize == 'Unknown' or filesize == '- - -':
             file_size = filesize
-        elif long(filesize) >= 1048576 :
+        elif int(filesize) >= 1048576 :
             file_size = "{} M".format(round(float(filesize)/1048576, 2))
-        elif 1023 < long(filesize) < 1048576 :
+        elif 1023 < int(filesize) < 1048576 :
             file_size = "{} k".format(round(float(filesize)/1024, 1))
         else:
             file_size = "{} B".format(filesize)
@@ -300,14 +304,15 @@ class Notifier(QSystemTrayIcon):
 
 class DirectDownload(QtCore.QObject):
     finished = QtCore.pyqtSignal()
-    def __init__(self, networkmanager, download_list, useragent=False):
-        ''' download_list is like ...
+    def __init__(self, networkmanager, download_list, useragent):
+        ''' DirectDownload ( QNetworkAccessManager, list of string list, str )
+        download_list is like ...
         [['/home/user/file1.txt', 'http://example1.com'], ['/home/user/file2.txt', 'http://example2.com']]'''
         super(DirectDownload, self).__init__(networkmanager)
         self.current_index = 0
         self.downloadBuffer = QtCore.QByteArray()
         self.download_list = download_list
-        self.useragent = useragent
+        self.useragent = useragent.encode('ascii')
         self.networkmanager = networkmanager
 
     def downloadFile(self, index=0):
@@ -315,7 +320,7 @@ class DirectDownload(QtCore.QObject):
         if self.file.exists():
             self.file.resize(0)
         req = QNetworkRequest(QtCore.QUrl.fromUserInput(self.download_list[index][1]))
-        req.setRawHeader('User-Agent', str(self.useragent))
+        req.setRawHeader(b'User-Agent', self.useragent)
         self.startDownload(req)
 
     def startDownload(self, req):
@@ -325,11 +330,11 @@ class DirectDownload(QtCore.QObject):
         self.reply.metaDataChanged.connect(loop.quit)
         loop.exec_()
         #wait(1000)
-        if self.reply.hasRawHeader('Location'):
-            URL = QtCore.QUrl.fromUserInput(self.reply.rawHeader('Location'))
+        if self.reply.hasRawHeader(b'Location'):
+            URL = QtCore.QUrl.fromUserInput(self.reply.rawHeader(b'Location'))
             self.reply.abort()
             req = QNetworkRequest(URL)
-            req.setRawHeader('User-Agent', self.useragent)
+            req.setRawHeader(b'User-Agent', self.useragent)
             self.startDownload(req)
             return
         print(self.reply.url().toString())
@@ -460,7 +465,7 @@ class SaveAsHtml(QtCore.QObject):
         # Save HTML
         html = doc.toOuterXml()
         htmlfile = open(filename, 'wb')
-        htmlfile.write("<!DOCTYPE html>")
+        htmlfile.write("<!DOCTYPE html>".encode('utf-8'))
         htmlfile.write(html.encode('utf8'))
         htmlfile.close()
         # Download data files
@@ -479,7 +484,8 @@ class SaveAsHtml(QtCore.QObject):
             src = matchobj.group(1).strip(' \'"')
             URL = QtCore.QUrl(src)
             if URL.isRelative():
-                url = self.data_files.keys()[self.data_files.values().index(filename)]
+                # Get key from value in a dictionary obj
+                url = list(self.data_files.keys())[list(self.data_files.values()).index(filename)]
                 URL = QtCore.QUrl(url).resolved(URL)
                 src = URL.toString()
             if src in self.data_files:

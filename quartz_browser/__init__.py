@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 """
 Name = Quartz Browser
 Executable Command = quartz
 Package Name = quartz-browser
 Python Module Name = quartz-browser
-Debian Dependency = python-pyqt5, python-pyqt5.qtwebkit
+Debian Dependency = python3-pyqt5, python3-pyqt5.qtwebkit
 
 Description = A Light Weight Internet Browser
 Features =  Change User agent to mobile/desktop
@@ -45,12 +44,13 @@ Last Update :
 #       Facebook sidebar
 #       Multiple search engines
 #       pytube in seperate thread
+#       View source in context menu
 # FIXME : 
 #       replce + by %2B in search engine.
 
 import os
 
-__version__ = "2.0.4"
+__version__ = "2.1.0"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
