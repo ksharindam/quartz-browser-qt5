@@ -331,13 +331,13 @@ class DirectDownload(QtCore.QObject):
         loop.exec_()
         #wait(1000)
         if self.reply.hasRawHeader(b'Location'):
-            URL = QtCore.QUrl.fromUserInput(self.reply.rawHeader(b'Location'))
+            URL = QtCore.QUrl.fromUserInput(_str(self.reply.rawHeader(b'Location')))
             self.reply.abort()
             req = QNetworkRequest(URL)
             req.setRawHeader(b'User-Agent', self.useragent)
             self.startDownload(req)
             return
-        print(self.reply.url().toString())
+        #print(self.reply.url().toString())
         if self.reply.isFinished():
             self.dataReceived()
             self.downloadStopped()

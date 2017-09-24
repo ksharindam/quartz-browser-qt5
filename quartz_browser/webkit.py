@@ -313,6 +313,7 @@ class UrlEdit(QLineEdit):
             return
         if ( "." not in text) or (" " in text): # If text is not valid url
             url = "https://www.google.com/search?q="+text
+            url = url.replace('+', '%2B')
             self.setText(url) 
         self.openUrlRequested.emit()
 

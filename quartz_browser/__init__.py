@@ -21,6 +21,7 @@ Last Update :
             Added : useragent changing option to main menu
             Fixed : crash for wrong media player command while playing rtsp video.
             Fixed : _bool() function always returned false when argument was bool type.
+            Fixed : + character was assumed as space.
             
 
 ...........................................................................
@@ -46,7 +47,7 @@ Last Update :
 #       pytube in seperate thread
 #       View source in context menu
 # FIXME : 
-#       replce + by %2B in search engine.
+#       
 
 import os
 
