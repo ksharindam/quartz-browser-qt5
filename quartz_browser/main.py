@@ -562,7 +562,11 @@ class Main(QMainWindow):
         if validYoutubeUrl(url):
             vid_id = parse_qs(urlparse(url).query)['v'][0]
             url = 'https://m.youtube.com/watch?v=' + vid_id
-            yt = YouTube(url)    # Use PyTube module for restricted videos
+            try:
+                yt = YouTube(url)
+            except:
+                QMessageBox.warning(self, "Download Failed !","This Video can not be downloaded")
+                return
             videos = yt.get_videos()
             dialog = youtube_dialog.YoutubeDialog(videos, self)
             if dialog.exec_() == 1 :
@@ -572,6 +576,7 @@ class Main(QMainWindow):
                 self.handleUnsupportedContent(reply, vid.filename + '.' + vid.extension)
             return
         # For embeded HTML5 videos
+        self.handleVideoButton(url)     # Refresh video url
         request = QNetworkRequest(self.video_URL)
         request.setRawHeader(b'Referer', self.video_page_url.encode('utf-8'))
         reply = networkmanager.get(request)
