@@ -622,7 +622,9 @@ class Main(QMainWindow):
         """ Prints current/requested page """
         if not page:
             page = self.tabWidget.currentWidget().page().currentFrame()
-        printer = QPrinter(mode=QPrinter.HighResolution)
+        printer = QPrinter(QPrinter.HighResolution)
+        printer.setPaperSize(QPrinter.A4)
+        printer.setPageSize(QPrinter.A4)
         printer.setCreator("Quartz Browser")
         title = self.tabWidget.currentWidget().page().mainFrame().title()
         title = validateFileName(title)

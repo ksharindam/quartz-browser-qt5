@@ -16,12 +16,7 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Last Update :
-            removed : maximize of startup option in settings dialog.
-            Remembers previous window state when closing the window.
-            Added : useragent changing option to main menu
-            Fixed : crash for wrong media player command while playing rtsp video.
-            Fixed : _bool() function always returned false when argument was bool type.
-            Fixed : + character was assumed as space.
+            set A4 as default printer page size
             
 
 ...........................................................................
@@ -51,7 +46,7 @@ Last Update :
 
 import os
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
