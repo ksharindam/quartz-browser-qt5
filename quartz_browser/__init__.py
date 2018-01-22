@@ -17,6 +17,7 @@ Features =  Change User agent to mobile/desktop
             Youtube Video and HTML5 video downloader.
 Last Update :
             set A4 as default printer page size
+            set Color mode as default print mode.
             
 
 ...........................................................................
@@ -46,7 +47,7 @@ Last Update :
 
 import os
 
-__version__ = "2.1.1"
+__version__ = "2.1.2"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
