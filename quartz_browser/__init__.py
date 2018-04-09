@@ -16,12 +16,11 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Last Update :
-            set A4 as default printer page size
-            set Color mode as default print mode.
+            HTML5 video downloader dialog added
             
 
 ...........................................................................
-|   Copyright (C) 2017 Arindam Chaudhuri <ksharindam@gmail.com>            |
+|   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |
 |                                                                          |
 |   This program is free software: you can redistribute it and/or modify   |
 |   it under the terms of the GNU General Public License as published by   |
@@ -47,7 +46,7 @@ Last Update :
 
 import os
 
-__version__ = "2.1.2"
+__version__ = "2.2.0 beta"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"

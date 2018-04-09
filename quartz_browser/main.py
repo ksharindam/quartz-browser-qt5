@@ -21,7 +21,7 @@ from PyQt5.QtWebKit import QWebSettings
 from PyQt5.QtWebKitWidgets import QWebPage, QWebFrame
 
 from .settings_dialog import Ui_SettingsDialog
-from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
+from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir, Media_Dialog
 from .import_export import *
 from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
 from . import download_confirm, youtube_dialog
@@ -576,11 +576,12 @@ class Main(QMainWindow):
                 self.handleUnsupportedContent(reply, vid.filename + '.' + vid.extension)
             return
         # For embeded HTML5 videos
-        self.handleVideoButton(url)     # Refresh video url
-        request = QNetworkRequest(self.video_URL)
-        request.setRawHeader(b'Referer', self.video_page_url.encode('utf-8'))
-        reply = networkmanager.get(request)
-        self.handleUnsupportedContent(reply)
+        self.getVideos()
+
+    def getVideos(self):
+        dialog = Media_Dialog(self, self.tabWidget.currentWidget().page())
+        dialog.downloadRequested.connect(self.download_requested_file)
+        dialog.exec_()
 
     def saveAsImage(self):
         """ Saves the whole page as PNG/JPG image"""
@@ -820,6 +821,7 @@ class Main(QMainWindow):
             self.fixedfontval = websettingsdialog.fixedfontCombo.currentText()
             self.applysettings()
             self.savesettings()
+
     def opensettings(self): 
         """ Reads settings file in ~/.config/quartz-browser/ directory and
             saves values in settings variables"""
@@ -839,6 +841,7 @@ class Main(QMainWindow):
         self.sansfontval = self.settings.value('SansFont', 'Sans')
         self.seriffontval = self.settings.value('SerifFont', 'Serif')
         self.fixedfontval = self.settings.value('FixedFont', 'Monospace')
+
     def savesettings(self):
         """ Writes setings to disk in ~/.config/quartz-browser/ directory"""
         self.settings.setValue('EnableAdblock', webkit.enable_adblock)
@@ -857,6 +860,7 @@ class Main(QMainWindow):
         self.settings.setValue('SansFont', self.sansfontval)
         self.settings.setValue('SerifFont', self.seriffontval)
         self.settings.setValue('FixedFont', self.fixedfontval)
+
     def applysettings(self):
         """ Reads settings variables, and changes browser settings.This is run after
             changing settings by Settings Dialog"""
