@@ -279,6 +279,7 @@ class MediaTable(QTableWidget):
         self.setColumnCount(1)
         self.setAlternatingRowColors(True)
         self.setSelectionMode(1) # Select Single Row
+        self.setTextElideMode(2) # Elide middle
         self.horizontalHeader().setHidden(True)
         self.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         # Get Video Urls
@@ -301,6 +302,9 @@ class MediaTable(QTableWidget):
                 self.video_list.append([video.toInnerXml(), video_URL, page_url])
         self.setRowCount(len(self.video_list))
         self.setMyData()
+        if self.video_list != []:
+            index = self.indexFromItem(self.item(0,0))
+            self.selectionModel().select(index, QItemSelectionModel.ClearAndSelect)
 
     def setMyData(self):
         for row, item in enumerate (self.video_list):

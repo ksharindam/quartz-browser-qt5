@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from . import __version__, homedir, downloaddir, program_dir
-import sys, shlex, os, re, subprocess
+import sys, shlex, os, subprocess
 from time import time
 from urllib.parse import urlparse, parse_qs
 
@@ -24,9 +24,8 @@ from .settings_dialog import Ui_SettingsDialog
 from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir, Media_Dialog
 from .import_export import *
 from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
-from . import download_confirm, youtube_dialog
+from . import download_confirm, youtube
 from . import resources, webkit
-from .pytube.api import YouTube
 
 docdir = homedir+"/Documents/"
 configdir = homedir+"/.config/quartz-browser/"
@@ -34,11 +33,6 @@ downloads_list_file = configdir+"downloads.txt"
 thumbnails_dir = configdir + 'thumbnails/'
 homepage = 'file://' + program_dir + 'home.html'
 
-youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.*&v)=)([a-zA-Z0-9\-_])+')
-
-def validYoutubeUrl(url):
-    if youtube_regex.match(url):
-        return True
 
 # Converts QByteArray to python str object
 def _str(byte_array):
@@ -436,31 +430,17 @@ class Main(QMainWindow):
         self.listmodel.setStringList( suggestions )
 
     def handleVideoButton(self, url):
-        if validYoutubeUrl(url):
+        if youtube.validYoutubeUrl(url):
             self.videoDownloadButton.show()
             return
-        self.video_URL = False
         frames = [self.tabWidget.currentWidget().page().mainFrame()]
         frames += self.tabWidget.currentWidget().page().mainFrame().childFrames()
         for frame in frames:
             videos = frame.findAllElements('video').toList()
-            for video in videos:
-                dl_link = video.attribute('src')
-                child = video.findFirst('source[src]')
-                if dl_link == '' and not child.isNull():
-                    dl_link = child.attribute('src')
-                dl_url = QUrl(dl_link)
-                if not dl_url.isValid(): continue
-                if dl_url.isRelative():
-                    dl_url = frame.url().resolved(dl_url)
-                self.video_URL = QUrl.fromUserInput(dl_url.toString())
-                self.video_page_url = frame.url().toString()
-                break
-                break
-        if self.video_URL:
-            self.videoDownloadButton.show()
-        else:
-            self.videoDownloadButton.hide()
+            if videos != []:
+                self.videoDownloadButton.show()
+                return
+        self.videoDownloadButton.hide()
 
 
 ##################### Downloading and Printing  ########################
@@ -558,25 +538,30 @@ class Main(QMainWindow):
 
     def downloadVideo(self):
         url = self.tabWidget.currentWidget().url().toString()
-        # For youtube videos
-        if validYoutubeUrl(url):
+        # For youtube videos, parse youtube links in separate thread
+        if youtube.validYoutubeUrl(url):
             vid_id = parse_qs(urlparse(url).query)['v'][0]
-            url = 'https://m.youtube.com/watch?v=' + vid_id
-            try:
-                yt = YouTube(url)
-            except:
-                QMessageBox.warning(self, "Download Failed !","This Video can not be downloaded")
-                return
-            videos = yt.get_videos()
-            dialog = youtube_dialog.YoutubeDialog(videos, self)
-            if dialog.exec_() == 1 :
-                index = abs(dialog.buttonGroup.checkedId())-2
-                vid = videos[index]
-                reply = networkmanager.get( QNetworkRequest(QUrl.fromUserInput(vid.url)) )
-                self.handleUnsupportedContent(reply, vid.filename + '.' + vid.extension)
+            ytThread = youtube.YoutubeThread(self)
+            ytThread.ytParseFailed.connect(self.onYtParseFail)
+            ytThread.ytVideoParsed.connect(self.onYtVideoParse)
+            ytThread.finished.connect(ytThread.deleteLater)
+            ytThread.vid_id = vid_id
+            ytThread.start()
             return
         # For embeded HTML5 videos
         self.getVideos()
+
+    def onYtVideoParse(self, videos):
+        dialog = youtube.YoutubeDialog(videos, self)
+        if dialog.exec_() == 1 :
+            index = abs(dialog.buttonGroup.checkedId())-2
+            vid = videos[index]
+            reply = networkmanager.get( QNetworkRequest(QUrl.fromUserInput(vid.url)) )
+            self.handleUnsupportedContent(reply, vid.filename + '.' + vid.extension)
+
+    def onYtParseFail(self):
+        # Show error on fail to parse youtube
+        QMessageBox.warning(self, "Download Failed !","This Video can not be downloaded")
 
     def getVideos(self):
         dialog = Media_Dialog(self, self.tabWidget.currentWidget().page())
@@ -942,6 +927,7 @@ class DownloadDialog(QDialog, download_confirm.Ui_downloadDialog):
         if not folder == '':
             self.folder = folder + "/"
             self.labelFolder.setText(self.folder)
+
 
 def main():
     global app, networkmanager, cookiejar

@@ -1,9 +1,32 @@
 # -*- coding: utf-8 -*-
+import re
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import ( QApplication, QDialog, QFrame, QVBoxLayout, QButtonGroup,
  QRadioButton, QDialogButtonBox, QSpacerItem, QSizePolicy )
 
+from .pytube.api import YouTube
+
+youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.*&v)=)([a-zA-Z0-9\-_])+')
+
+def validYoutubeUrl(url):
+    if youtube_regex.match(url):
+        return True
+
+class YoutubeThread(QtCore.QThread):
+    ytVideoParsed = QtCore.pyqtSignal(list)
+    ytParseFailed = QtCore.pyqtSignal()
+    def __init__(self, parent):
+        QtCore.QThread.__init__(self, parent)
+
+    def run(self):
+        url = 'https://www.youtube.com/watch?v=' + self.vid_id
+        try:
+            yt = YouTube(url)
+            videos = yt.get_videos()
+            self.ytVideoParsed.emit(videos)
+        except:
+            self.ytParseFailed.emit()
 
 class YoutubeDialog(QDialog):
     def __init__(self, videos, parent):

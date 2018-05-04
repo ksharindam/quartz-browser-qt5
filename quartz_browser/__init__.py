@@ -17,7 +17,7 @@ Features =  Change User agent to mobile/desktop
             Youtube Video and HTML5 video downloader.
 Last Update :
             HTML5 video downloader dialog added
-            
+            Youtube Video is parsed in separate thread
 
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |
@@ -39,14 +39,13 @@ Last Update :
 # TODO : 
 #       Facebook sidebar
 #       Multiple search engines
-#       pytube in seperate thread
 #       View source in context menu
 # FIXME : 
 #       
 
 import os
 
-__version__ = "2.2.0 beta"
+__version__ = "2.2.1"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"

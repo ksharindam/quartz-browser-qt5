@@ -230,6 +230,7 @@ class DownloadsTable(QTableView):
         QTableWidget.__init__(self, parent)
         self.setAlternatingRowColors(True)
         self.setSelectionBehavior(1) # Select Rows
+        self.setTextElideMode(2)     # Elide middle
         self.setModel(model)
         model.dataChanged.connect(self.dataChanged)
         model.updateRequested.connect(self.update)
