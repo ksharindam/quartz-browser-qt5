@@ -21,7 +21,7 @@ from PyQt5.QtWebKit import QWebSettings
 from PyQt5.QtWebKitWidgets import QWebPage, QWebFrame
 
 from .settings_dialog import Ui_SettingsDialog
-from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir, Media_Dialog
+from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
 from .import_export import *
 from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
 from . import download_confirm, youtube
@@ -564,7 +564,7 @@ class Main(QMainWindow):
         QMessageBox.warning(self, "Download Failed !","This Video can not be downloaded")
 
     def getVideos(self):
-        dialog = Media_Dialog(self, self.tabWidget.currentWidget().page())
+        dialog = youtube.Media_Dialog(self, self.tabWidget.currentWidget().page())
         dialog.downloadRequested.connect(self.download_requested_file)
         dialog.exec_()
 

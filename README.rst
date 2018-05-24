@@ -1,6 +1,6 @@
-Quartz Browser
-==============
-A useful fast Web Browser written in pyqt5 webkit
+Quartz Browser for Linux
+========================
+A useful fast Web Browser for linux written in pyqt5 webkit
 
 **Dependency** = python3, python3-pyqt5, python3-pyqt5.qtwebkit
 
@@ -16,12 +16,12 @@ Installation
 
 | To Install the browser open terminal inside quartz-browser-qt5 directory.
 | And then run following command..
-| ``$ sudo pip install .``
+| ``$ sudo pip3 install .``
 
 Quartz Browser will be automatically added to applications menu.  
 
 | To uninstall run..
-| ``$ sudo pip uninstall quartz-browser``
+| ``$ sudo pip3 uninstall quartz-browser``
 
 Usage
 -----
