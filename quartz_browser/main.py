@@ -477,6 +477,7 @@ class Main(QMainWindow):
                 filename = content_name.split('=')[-1]
         else:
             decoded_url = QUrl.fromUserInput(reply.url().toString())
+            decoded_url.setFragment(None)
             decoded_url = decoded_url.toString(QUrl.RemoveQuery)
             filename = QFileInfo(decoded_url).fileName()
         filename = validateFileName(filename)

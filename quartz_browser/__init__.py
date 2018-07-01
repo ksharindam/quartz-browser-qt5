@@ -45,7 +45,7 @@ Last Update :
 
 import os
 
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
