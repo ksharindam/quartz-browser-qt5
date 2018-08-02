@@ -18,6 +18,7 @@ Features =  Change User agent to mobile/desktop
 Last Update :
             HTML5 video downloader dialog added
             Youtube Video is parsed in separate thread
+            fixed : multiple file upload crash
 
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |
@@ -45,7 +46,7 @@ Last Update :
 
 import os
 
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"

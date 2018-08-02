@@ -120,7 +120,7 @@ class MyWebPage(QWebPage):
     def extension(self, extension, option, output):
         """ Allows to upload files where multiple selections are allowed """
         if extension == QWebPage.ChooseMultipleFilesExtension:
-            output.fileNames = QFileDialog.getOpenFileNames(self.view(), "Select Files to Upload", homedir)
+            output.fileNames, sel_filter = QFileDialog.getOpenFileNames(self.view(), "Select Files to Upload", homedir)
             return True
         elif extension == QWebPage.ErrorPageExtension:
             error_dict = {'0':'QtNetwork', '1':'HTTP', '2':'Webkit'}
