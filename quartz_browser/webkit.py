@@ -260,7 +260,8 @@ class MyWebView(QWebView):
         pm = self.page().mainFrame().hitTestContent(self.rel_pos).pixmap()
         url = self.page().mainFrame().hitTestContent(self.rel_pos).imageUrl()
         url.setFragment(None)
-        filepath = url.toString(QUrl.RemoveQuery)
+        url = url.toString(QUrl.RemoveQuery).encode('utf8')
+        filepath = QUrl.fromPercentEncoding(url)
         if QFileInfo(filepath).suffix() not in ['jpg', 'jpeg', 'png'] :
             filepath = os.path.splitext(filepath)[0] + '.jpg'
         filepath = QFileDialog.getSaveFileName(self,

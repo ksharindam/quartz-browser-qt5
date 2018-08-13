@@ -22,11 +22,11 @@ from PyQt5.QtNetwork import QNetworkRequest
 from PyQt5.QtWebKit import QWebSettings
 from PyQt5.QtWebKitWidgets import QWebPage, QWebFrame
 
-from .settings_dialog import Ui_SettingsDialog
+from .ui_settings_dialog import Ui_SettingsDialog
 from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
 from .import_export import *
 from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
-from . import download_confirm, youtube
+from . import ui_download_confirm, youtube
 from . import resources_rc, webkit
 
 docdir = homedir+"/Documents/"
@@ -919,7 +919,7 @@ def _bool(strng):
         return True if strng=='true' else False
     return bool(strng)
 
-class DownloadDialog(QDialog, download_confirm.Ui_downloadDialog):
+class DownloadDialog(QDialog, ui_download_confirm.Ui_downloadDialog):
     def __init__(self, parent):
         QDialog.__init__(self, parent)
         self.folder = downloaddir

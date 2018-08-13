@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'files/dwnld_confirm.ui'
+# Form implementation generated from reading ui file 'files/download_confirm.ui'
 #
 # Created by: PyQt5 UI code generator 5.7
 #
