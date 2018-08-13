@@ -19,6 +19,7 @@ Last Update :
             HTML5 video downloader dialog added
             Youtube Video is parsed in separate thread
             fixed : multiple file upload crash
+            autorenames files that exist already
 
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |

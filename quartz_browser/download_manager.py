@@ -46,25 +46,26 @@ class Download(QtCore.QObject):
         self.updateMetaData()
         self.file = QtCore.QFile(self.filepath, self)
         self.loadedsize = 0
-        if self.support_resume == True and self.file.exists():
+        if self.file.exists():
             dialog = QMessageBox(QApplication.desktop())
             dialog.setWindowTitle('Filename Exists.Overwrite?')
             dialog.setText("The file already exists.\nDo you want to Overwrite old file?")
-            dialog.addButton('Rename', QMessageBox.RejectRole)
-            b2 = dialog.addButton('Replace Old', QMessageBox.NoRole)
-            b1 = dialog.addButton('Continue Remaining', QMessageBox.YesRole)
-            dialog.setDefaultButton(b1)
+            b1 = dialog.addButton('Overwrite', QMessageBox.NoRole)
+            b2 = dialog.addButton('Rename', QMessageBox.RejectRole)
+            if self.support_resume:
+                b3 = dialog.addButton('Resume', QMessageBox.YesRole)
+                dialog.setDefaultButton(b3)
             dialog.exec_()
             confirm = dialog.clickedButton()
-            if confirm == b1:
+            if self.support_resume and confirm == b3: # Resume
                 self.download.abort()
                 self.download.deleteLater()
                 self.resumeDownload()
-            elif confirm == b2:
+            elif confirm == b1:         # Overwrite
                 self.file.resize(0)
-            else:
-                self.filepath = os.path.splitext(self.filepath)[0] + '1' + os.path.splitext(self.filepath)[1]
-                self.file = QtCore.QFile(self.filepath)
+            else:                       # Rename
+                self.filepath = autoRename(self.filepath)
+                self.file = QtCore.QFile(self.filepath)                 
         else:
             self.file.resize(0)
         self.filename = QtCore.QFileInfo(self.filepath).fileName()
@@ -550,3 +551,10 @@ def wait(millisec):
     QtCore.QTimer.singleShot(millisec, loop.quit)
     loop.exec_()
 
+def autoRename(filename):
+    name, ext = os.path.splitext(filename)
+    i = 0
+    while 1:
+        if not os.path.exists(filename) : return filename
+        i+=1
+        filename = name + str(i) + ext
