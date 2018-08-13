@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from . import __version__, homedir, downloaddir, program_dir
 import sys, shlex, os, subprocess
+sys.path.append(os.path.dirname(__file__)) # A workout for enabling python 2 like import
+
+from . import __version__, homedir, downloaddir, program_dir
 from time import time
 from urllib.parse import urlparse, parse_qs
 
@@ -25,7 +27,7 @@ from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dia
 from .import_export import *
 from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
 from . import download_confirm, youtube
-from . import resources, webkit
+from . import resources_rc, webkit
 
 docdir = homedir+"/Documents/"
 configdir = homedir+"/.config/quartz-browser/"
@@ -259,7 +261,7 @@ class Main(QMainWindow):
             grid.addWidget(widget, 0,index,1,1)
         grid.addWidget(self.tabWidget, 2, 0, 1, 15)
 
-#-----------------------Window settings --------------------------------
+#------------------------------------------------------------------------------------------
 #        Must be at the end, otherwise cause segmentation fault
 #       self.status = self.statusBar() 
 
@@ -275,6 +277,7 @@ class Main(QMainWindow):
         webview_tab.urlChanged.connect(self.onUrlChange)
         webview_tab.titleChanged.connect(self.onTitleChange)
         webview_tab.iconChanged.connect(self.onIconChange)
+        webview_tab.videoListRequested.connect(self.getVideos)
         webview_tab.page().printRequested.connect(self.printpage)
         webview_tab.page().downloadRequested.connect(self.download_requested_file)
         webview_tab.page().unsupportedContent.connect(self.handleUnsupportedContent)
@@ -434,10 +437,10 @@ class Main(QMainWindow):
             self.videoDownloadButton.show()
             return
         frames = [self.tabWidget.currentWidget().page().mainFrame()]
-        frames += self.tabWidget.currentWidget().page().mainFrame().childFrames()
+        frames += frames[0].childFrames()
         for frame in frames:
-            videos = frame.findAllElements('video').toList()
-            if videos != []:
+            video = frame.findFirstElement('video')
+            if not video.isNull():
                 self.videoDownloadButton.show()
                 return
         self.videoDownloadButton.hide()
@@ -921,13 +924,22 @@ class DownloadDialog(QDialog, download_confirm.Ui_downloadDialog):
         QDialog.__init__(self, parent)
         self.folder = downloaddir
         self.setupUi(self)
+        self.labelWarning.hide()
         self.folderButton.clicked.connect(self.changeFolder)
         self.labelFolder.setText(downloaddir)
+        self.filenameEdit.textChanged.connect(self.onFilenameChange)
+
     def changeFolder(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Folder", homedir)
         if not folder == '':
             self.folder = folder + "/"
             self.labelFolder.setText(self.folder)
+
+    def onFilenameChange(self, filename):
+        if os.path.exists(self.folder+filename):
+            self.labelWarning.show()
+        else:
+            self.labelWarning.hide()
 
 
 def main():

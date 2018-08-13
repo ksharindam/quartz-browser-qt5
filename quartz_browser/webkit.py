@@ -143,6 +143,7 @@ class MyWebPage(QWebPage):
 
 class MyWebView(QWebView):
     windowCreated = pyqtSignal(QWebView)
+    videoListRequested = pyqtSignal()
     def __init__(self, parent, networkmanager):
         QWebView.__init__(self, parent)
         page = MyWebPage(self, networkmanager)
@@ -242,6 +243,16 @@ class MyWebView(QWebView):
            edit_page_action.setChecked(self.page().isContentEditable())
            edit_page_action.triggered.connect(self.page().setContentEditable)
            menu.addAction(edit_page_action)
+        # Add download videos button
+        frames = [self.page().mainFrame()] + self.page().mainFrame().childFrames()
+        for frame in frames:
+            video = frame.findFirstElement('video')
+            if not video.isNull():
+                videos_action = QAction(QIcon.fromTheme('video-x-generic'), "Download Videos", self)
+                videos_action.triggered.connect(self.showVideos)
+                menu.addAction(videos_action)
+                break
+
         menu.exec_(self.mapToGlobal(event.pos()))
 
     def saveImageToDisk(self):
@@ -265,6 +276,9 @@ class MyWebView(QWebView):
             src = self.url().resolved(src)
         reqst = QNetworkRequest(src)
         self.page().downloadRequested.emit(reqst)
+
+    def showVideos(self):
+        self.videoListRequested.emit()
 
     def toggleAutoRefresh(self, enable):
         if enable:

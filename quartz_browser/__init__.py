@@ -20,6 +20,8 @@ Last Update :
             Youtube Video is parsed in separate thread
             fixed : multiple file upload crash
             autorenames files that exist already
+            added : Download Videos option in right click context menu
+            show warning when downloading filename already exists
 
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |
@@ -42,12 +44,13 @@ Last Update :
 #       Facebook sidebar
 #       Multiple search engines
 #       View source in context menu
+#       auto correct file extensions (videoplayback -> videoplayback.mp4)
 # FIXME : 
 #       
 
 import os
 
-__version__ = "2.2.3"
+__version__ = "2.2.5"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"

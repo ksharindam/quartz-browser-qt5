@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os, time, re, io
-from . import resources
+from . import resources_rc
 from subprocess import Popen
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
