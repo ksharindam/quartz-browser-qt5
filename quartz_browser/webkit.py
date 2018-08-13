@@ -248,9 +248,8 @@ class MyWebView(QWebView):
         """ This saves an image in page directly without downloading"""
         pm = self.page().mainFrame().hitTestContent(self.rel_pos).pixmap()
         url = self.page().mainFrame().hitTestContent(self.rel_pos).imageUrl()
-        url.setFragment('')
-        # FIXME :url.setQueryItems([]) alternative
-        filepath = url.toString()
+        url.setFragment(None)
+        filepath = url.toString(QUrl.RemoveQuery)
         if QFileInfo(filepath).suffix() not in ['jpg', 'jpeg', 'png'] :
             filepath = os.path.splitext(filepath)[0] + '.jpg'
         filepath = QFileDialog.getSaveFileName(self,
