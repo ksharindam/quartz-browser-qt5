@@ -25,7 +25,8 @@ from PyQt5.QtWebKitWidgets import QWebPage, QWebFrame
 from .ui_settings_dialog import Ui_SettingsDialog
 from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
 from .import_export import *
-from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml, validateFileName
+from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml
+from .common import *
 from . import ui_download_confirm, youtube
 from . import resources_rc, webkit
 
@@ -452,7 +453,7 @@ class Main(QMainWindow):
         reply = networkmanager.get(networkrequest)
         self.handleUnsupportedContent(reply)
 
-    def handleUnsupportedContent(self, reply, force_filename=None):
+    def handleUnsupportedContent(self, reply, preset_filename=None):
         """ This is called when url content is a downloadable file. e.g- pdf,mp3,mp4 """
         if reply.rawHeaderList() == []:
             loop = QEventLoop()
@@ -463,27 +464,22 @@ class Main(QMainWindow):
             URL = QUrl.fromUserInput(_str(reply.rawHeader(b'Location')))
             reply.abort()
             reply = networkmanager.get(QNetworkRequest(URL))
-            self.handleUnsupportedContent(reply, force_filename)
+            self.handleUnsupportedContent(reply, preset_filename)
             return
         for (title, header) in reply.rawHeaderPairs():
             print( _str(title) + "-> " + _str(header) )
-        # Get filename
+        # Get filename and mimetype
+        mimetype = None
+        if reply.hasRawHeader(b'Content-Type'):
+            mimetype = _str(reply.rawHeader(b'Content-Type')).split(';')[0] # eg - audio/mpeg; name=""
         content_name = _str(reply.rawHeader(b'Content-Disposition'))
-        if force_filename:
-            filename = force_filename
-        elif 'filename=' in content_name or 'filename*=' in content_name:
-            if content_name.count('"') >= 2: # Extracts texts inside quotes when two quotes are present
-                start = content_name.find('"')+1
-                end = content_name.rfind('"')
-                filename = content_name[start:end]
-            else:
-                filename = content_name.split('=')[-1]
+        if preset_filename:
+            filename = preset_filename
         else:
-            decoded_url = QUrl.fromUserInput(reply.url().toString())
-            decoded_url.setFragment(None)
-            decoded_url = decoded_url.toString(QUrl.RemoveQuery)
-            filename = QFileInfo(decoded_url).fileName()
-        filename = validateFileName(filename)
+            filename = filenameFromHeader(content_name)
+            if filename == '':
+                filename = filenameFromUrl(reply.url().toString())
+        filename = validateFileName(filename, mimetype)
         # Create downld Confirmation dialog
         dlDialog = DownloadDialog(self)
         dlDialog.filenameEdit.setText(filename)
@@ -498,8 +494,8 @@ class Main(QMainWindow):
                 file_size = "{} B".format(filesize)
             dlDialog.labelFileSize.setText(file_size)
         # Get filetype and resume support info
-        if reply.hasRawHeader(b'Content-Type'):
-            dlDialog.labelFileType.setText(_str(reply.rawHeader(b'Content-Type')))
+        if mimetype:
+            dlDialog.labelFileType.setText(mimetype)
         if reply.hasRawHeader(b'Accept-Ranges') or reply.hasRawHeader(b'Content-Range'):
             dlDialog.labelResume.setText("True")
         # Execute dialog and show confirmation
@@ -568,8 +564,8 @@ class Main(QMainWindow):
         QMessageBox.warning(self, "Download Failed !","This Video can not be downloaded")
 
     def getVideos(self):
-        dialog = youtube.Media_Dialog(self, self.tabWidget.currentWidget().page())
-        dialog.downloadRequested.connect(self.download_requested_file)
+        dialog = youtube.Media_Dialog(self, self.tabWidget.currentWidget().page(), networkmanager)
+        dialog.downloadRequested.connect(self.handleUnsupportedContent)
         dialog.exec_()
 
     def saveAsImage(self):

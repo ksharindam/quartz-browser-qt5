@@ -6,9 +6,10 @@ from PyQt5.QtWidgets import ( QApplication, QDialog, QFrame, QVBoxLayout, QGridL
  QRadioButton, QDialogButtonBox, QSpacerItem, QSizePolicy, QTableWidget, QHeaderView,
  QTableWidgetItem, QPushButton )
 from PyQt5.Qt import QItemSelectionModel
-from PyQt5.QtNetwork import QNetworkRequest
+from PyQt5.QtNetwork import QNetworkRequest, QNetworkReply
 
 from .pytube.api import YouTube
+from .common import *
 
 youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.*&v)=)([a-zA-Z0-9\-_])+')
 
@@ -110,8 +111,9 @@ class MediaTable(QTableWidget):
 
 
 class Media_Dialog(QDialog):
-    downloadRequested = QtCore.pyqtSignal(QNetworkRequest)
-    def __init__(self, parent, webpage):
+    downloadRequested = QtCore.pyqtSignal(QNetworkReply, str)
+    def __init__(self, parent, webpage, networkmanager):
+        self._networkmanager = networkmanager
         QDialog.__init__(self, parent)
         self.setWindowTitle("Download Media")
         self.resize(740, 450)
@@ -141,6 +143,7 @@ class Media_Dialog(QDialog):
             self.downloadBtn.setDisabled(True)
             self.copyLinkBtn.setDisabled(True)
             self.sourceBtn.setDisabled(True)
+        self.page_title = webpage.mainFrame().title()
 
     def viewSource(self):
         pass
@@ -156,6 +159,7 @@ class Media_Dialog(QDialog):
         page_url = self.tableWidget.video_list[row][2]
         request = QNetworkRequest(URL)
         request.setRawHeader(b'Referer', page_url.encode('utf-8'))
-        self.downloadRequested.emit(request)
+        reply = self._networkmanager.get(request)
+        self.downloadRequested.emit(reply, self.page_title)
         self.accept()   # quit dialog
 

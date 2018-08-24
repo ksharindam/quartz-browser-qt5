@@ -6,7 +6,9 @@ from PyQt5.QtWebKitWidgets import QWebPage, QWebView
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkCookie, QNetworkCookieJar, QNetworkAccessManager
 
 from . import __version__, homedir, downloaddir, program_dir
+from .common import *
 import os, shlex, subprocess
+from urllib import parse
 
 js_debug_mode = False
 enable_adblock = True
@@ -259,17 +261,14 @@ class MyWebView(QWebView):
         """ This saves an image in page directly without downloading"""
         pm = self.page().mainFrame().hitTestContent(self.rel_pos).pixmap()
         url = self.page().mainFrame().hitTestContent(self.rel_pos).imageUrl()
-        url.setFragment(None)
-        url = url.toString(QUrl.RemoveQuery).encode('utf8')
-        filepath = QUrl.fromPercentEncoding(url)
-        if QFileInfo(filepath).suffix() not in ['jpg', 'jpeg', 'png'] :
-            filepath = os.path.splitext(filepath)[0] + '.jpg'
+        filename = filenameFromUrl(url.toString())
+        if QFileInfo(filename).suffix() not in ['jpg', 'jpeg', 'png'] :
+            filename = os.path.splitext(filename)[0] + '.jpg'
         filepath = QFileDialog.getSaveFileName(self,
-                                      "Select Image to Save", downloaddir + QFileInfo(filepath).fileName(),
+                                      "Select Image to Save", downloaddir + filename,
                                       "All Images (*.jpg *.jpeg *.png);;JPEG File (*.jpg);;PNG File (*.png)" )[0]
-        if not filepath == '':
-          if pm.save(filepath):
-            QMessageBox.information(self, "Successful !","Image %s \nhas been successfully saved!"%QFileInfo(filepath).fileName())
+        if (filepath != '') and pm.save(filepath):
+            QMessageBox.information(self, "Successful !","Image has been successfully saved as\n%s"%filepath)
 
     def downloadContent(self):
         src = QUrl.fromUserInput(self.src_url)

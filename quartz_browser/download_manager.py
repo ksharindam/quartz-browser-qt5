@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import ( QApplication, QTableView, QTableWidget, QHeaderVie
     QMessageBox, QMenu, QVBoxLayout, QDialogButtonBox, QSystemTrayIcon )
 from PyQt5.QtNetwork import QNetworkRequest
 
+from common import *
+
 def _str(byte_array):
     return bytes(byte_array).decode('utf-8')
 
@@ -532,29 +534,3 @@ class SaveAsHtml(QtCore.QObject):
         URL = QtCore.QUrl.fromUserInput(URL.toString())
         return URL.toString()
 
-
-
-def validateFileName(text):
-    """ Removes all forbidden chars and extra spaces"""
-    if text == '':
-        text = time.strftime('%Y-%m-%d %H:%M:%S')
-    else:
-        chars = [ '/', '\\', '|', '*', '"', '`', '<', '>', '^', '?', '$', '=']
-        for char in  chars:
-            text = text.replace(char, ' ')
-        while '  ' in text:
-            text = text.replace('  ', ' ')
-    return text
-
-def wait(millisec):
-    loop = QtCore.QEventLoop()
-    QtCore.QTimer.singleShot(millisec, loop.quit)
-    loop.exec_()
-
-def autoRename(filename):
-    name, ext = os.path.splitext(filename)
-    i = 0
-    while 1:
-        if not os.path.exists(filename) : return filename
-        i+=1
-        filename = name + str(i) + ext
