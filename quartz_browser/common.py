@@ -63,3 +63,8 @@ def filenameFromUrl(addr):
     Url.setFragment(None)
     url = Url.toString(QtCore.QUrl.RemoveQuery)
     return QtCore.QFileInfo(parse.unquote_plus(url)).fileName()
+
+# Converts QByteArray to python str object
+def str_(byte_array):
+    return bytes(byte_array).decode('utf-8')
+

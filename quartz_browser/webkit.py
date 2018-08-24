@@ -26,9 +26,6 @@ with open(blocklist, 'r') as ab_file:
     ad_strings = [line.rstrip() for line in lines]
 
 
-def _str(byte_array):
-    return bytes(byte_array).decode('utf-8')
-
 class MyCookieJar(QNetworkCookieJar):
     """ Reimplemented QNetworkCookieJar to get cookie import/export feature"""
     def __init__(self, parent=None):
@@ -94,10 +91,10 @@ class NetworkAccessManager(QNetworkAccessManager):
     def gotMetadata(self):
         ''' Prints raw Headers of requested url '''
         reply = self.sender()
-        #if _str(reply.rawHeader(b'Content-Type')) == r'audio/mpeg': reply.abort()
+        #if str_(reply.rawHeader(b'Content-Type')) == r'audio/mpeg': reply.abort()
         #print(reply.url().toString())
-        #print( _str(reply.rawHeader(b'Content-Type')))
-        if 'javascript' in _str(reply.rawHeader(b'Content-Type')):
+        #print( str_(reply.rawHeader(b'Content-Type')))
+        if 'javascript' in str_(reply.rawHeader(b'Content-Type')):
             print(reply.url().toString())
 
 
@@ -200,7 +197,7 @@ class MyWebView(QWebView):
         element = result.element()
         child = element.firstChild()
         src = ''
-        #print(element.toOuterXml())
+        print(element.toOuterXml())
         if element.hasAttribute('src'):
             src = element.attribute('src')
         elif child.hasAttribute('src'):

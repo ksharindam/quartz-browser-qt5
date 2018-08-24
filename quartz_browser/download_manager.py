@@ -11,9 +11,6 @@ from PyQt5.QtNetwork import QNetworkRequest
 
 from common import *
 
-def _str(byte_array):
-    return bytes(byte_array).decode('utf-8')
-
 
 class Download(QtCore.QObject):
     datachanged = QtCore.pyqtSignal()
@@ -140,7 +137,7 @@ class Download(QtCore.QObject):
         """ Updates download header data in download (Resume support, url, Size)"""
         # Update Url path
         if self.download.hasRawHeader(b'Location'):
-            self.url = _str(self.download.rawHeader(b'Location'))
+            self.url = str_(self.download.rawHeader(b'Location'))
         else:
             self.url = self.download.url().toString()
         # Update total size
@@ -335,7 +332,7 @@ class DirectDownload(QtCore.QObject):
         loop.exec_()
         #wait(1000)
         if self.reply.hasRawHeader(b'Location'):
-            URL = QtCore.QUrl.fromUserInput(_str(self.reply.rawHeader(b'Location')))
+            URL = QtCore.QUrl.fromUserInput(str_(self.reply.rawHeader(b'Location')))
             self.reply.abort()
             req = QNetworkRequest(URL)
             req.setRawHeader(b'User-Agent', self.useragent)
@@ -509,7 +506,8 @@ class SaveAsHtml(QtCore.QObject):
             f.close()
             doc = self.doc.clone()
             doc.setInnerXml(html)
-            page_URL = QtCore.QUrl( self.data_files.keys()[self.data_files.values().index(filename)] )
+            filename_index = list(self.data_files.values()).index(filename)
+            page_URL = QtCore.QUrl( list(self.data_files.keys())[filename_index] )
             SaveAsHtml(self.networkmanager, doc, filename, page_URL, self.useragent, True)
         if not self.childframe:
             trayIcon = Notifier(self)

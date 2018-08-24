@@ -37,10 +37,6 @@ thumbnails_dir = configdir + 'thumbnails/'
 homepage = 'file://' + program_dir + 'home.html'
 
 
-# Converts QByteArray to python str object
-def _str(byte_array):
-    return bytes(byte_array).decode('utf-8')
-
 class Main(QMainWindow):
     def __init__(self): 
         global downloads_list_file
@@ -461,18 +457,18 @@ class Main(QMainWindow):
             QTimer.singleShot(5000, loop.quit)
             loop.exec_()
         if reply.hasRawHeader(b'Location'):
-            URL = QUrl.fromUserInput(_str(reply.rawHeader(b'Location')))
+            URL = QUrl.fromUserInput(str_(reply.rawHeader(b'Location')))
             reply.abort()
             reply = networkmanager.get(QNetworkRequest(URL))
             self.handleUnsupportedContent(reply, preset_filename)
             return
         for (title, header) in reply.rawHeaderPairs():
-            print( _str(title) + "-> " + _str(header) )
+            print( str_(title) + "-> " + str_(header) )
         # Get filename and mimetype
         mimetype = None
         if reply.hasRawHeader(b'Content-Type'):
-            mimetype = _str(reply.rawHeader(b'Content-Type')).split(';')[0] # eg - audio/mpeg; name=""
-        content_name = _str(reply.rawHeader(b'Content-Disposition'))
+            mimetype = str_(reply.rawHeader(b'Content-Type')).split(';')[0] # eg - audio/mpeg; name=""
+        content_name = str_(reply.rawHeader(b'Content-Disposition'))
         if preset_filename:
             filename = preset_filename
         else:
