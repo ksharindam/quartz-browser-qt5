@@ -2,7 +2,11 @@ Quartz Browser for Linux
 ========================
 A useful fast Web Browser for linux written in pyqt5 webkit
 
-**Dependency** = python3, python3-pyqt5, python3-pyqt5.qtwebkit
+**Dependency**
+
+* python3
+* python3-pyqt5
+* python3-pyqt5.qtwebkit
 
 Description
 -----------
@@ -57,3 +61,8 @@ Important Features :
 * Play video with RTSP protocol using a media player (e.g omxplayer, mplayer)  
 * YouTube video download support. (Download button automatically appears)  
 * HTML5 Video download support.  
+
+Screenshot
+----------
+
+.. image:: files/Screenshot.jpg
