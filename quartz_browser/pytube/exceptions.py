@@ -1,33 +1,44 @@
-class MultipleObjectsReturned(Exception):
-    """The query returned multiple objects when only one was expected.
-    """
-    pass
-
-
-class ExtractorError(Exception):
-    """Something specific to the js parser failed.
-    """
+# -*- coding: utf-8 -*-
+"""Library specific exception definitions."""
+import sys
 
 
 class PytubeError(Exception):
-    """Something specific to the wrapper failed.
+    """Base pytube exception that all others inherent.
+
+    This is done to not pollute the built-in exceptions, which *could* result
+    in unintended errors being unexpectedly and incorrectly handled within
+    implementers code.
     """
-    pass
 
 
-class CipherError(Exception):
-    """The _cipher method returned an error.
-    """
-    pass
+class ExtractError(PytubeError):
+    """Data extraction based exception."""
+
+    def __init__(self, msg, video_id=None):
+        """Construct an instance of a :class:`ExtractError <ExtractError>`.
+
+        :param str msg:
+            User defined error message.
+        :param str video_id:
+            A YouTube video identifier.
+        """
+        if video_id is not None:
+            msg = '{video_id}: {msg}'.format(video_id=video_id, msg=msg)
+
+        super(ExtractError, self).__init__(msg)
+
+        self.exc_info = sys.exc_info()
+        self.video_id = video_id
 
 
-class DoesNotExist(Exception):
-    """The requested video does not exist.
-    """
-    pass
+class RegexMatchError(ExtractError):
+    """Regex pattern did not return any matches."""
 
 
-class AgeRestricted(Exception):
-    """The requested video has an age restriction.
-    """
-    pass
+class LiveStreamError(ExtractError):
+    """Video is a live stream."""
+
+
+class VideoUnavailable(PytubeError):
+    """Video is unavailable."""

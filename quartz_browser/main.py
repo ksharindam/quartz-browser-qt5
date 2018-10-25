@@ -464,6 +464,8 @@ class Main(QMainWindow):
             return
         for (title, header) in reply.rawHeaderPairs():
             print( str_(title) + "-> " + str_(header) )
+        # copy url to clipboard
+        QApplication.clipboard().setText(reply.url().toString())
         # Get filename and mimetype
         mimetype = None
         if reply.hasRawHeader(b'Content-Type'):

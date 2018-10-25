@@ -24,7 +24,7 @@ setup(
     'Programming Language :: Python :: 3.5',
     'Topic :: Internet :: WWW/HTTP :: Browsers',
     ],
-    packages=['quartz_browser', 'quartz_browser.pytube'],
+    packages=['quartz_browser', 'quartz_browser.pytube', 'quartz_browser.pytube.contrib'],
     entry_points={
       'console_scripts': ['quartz=quartz_browser.main:main',
                           'pytube=quartz_browser.pytube.__main__:main'],

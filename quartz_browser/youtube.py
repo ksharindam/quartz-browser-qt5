@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import ( QApplication, QDialog, QFrame, QVBoxLayout, QGridL
 from PyQt5.Qt import QItemSelectionModel
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkReply
 
-from .pytube.api import YouTube
+from .pytube import YouTube
 from .common import *
 
 youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.*&v)=)([a-zA-Z0-9\-_])+')
@@ -16,6 +16,13 @@ youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.
 def validYoutubeUrl(url):
     if youtube_regex.match(url):
         return True
+
+class Video():
+    def __init__(self, stream):
+        """ param: PytubeStream stream """
+        self.url = stream.url
+        self.filename = stream.player_config_args['title']
+        self.resolution, self.extension, self.info = itag_dict[int(stream.itag)]
 
 class YoutubeThread(QtCore.QThread):
     ytVideoParsed = QtCore.pyqtSignal(list)
@@ -26,11 +33,16 @@ class YoutubeThread(QtCore.QThread):
     def run(self):
         url = 'https://www.youtube.com/watch?v=' + self.vid_id
         try:
-            yt = YouTube(url)
-            videos = yt.get_videos()
+            streams = YouTube(url).streams
+            videos = []
+            for itag in itag_list:
+                stream = streams.get_by_itag(itag)
+                if stream:
+                    videos.append(Video(stream))
             self.ytVideoParsed.emit(videos)
         except:
             self.ytParseFailed.emit()
+
 
 class YoutubeDialog(QDialog):
     def __init__(self, videos, parent):
@@ -46,11 +58,11 @@ class YoutubeDialog(QDialog):
         self.frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame)
         self.buttonGroup = QButtonGroup(self.frame)
-        if len(self.videos)>3: checked_btn = 2 
+        if len(self.videos)>3: checked_btn = 1
         else: checked_btn = len(self.videos)-1
         for i, video in enumerate(self.videos):
             radioButton = QRadioButton(self.frame)
-            radioButton.setText(video.resolution + "   (" + video.extension + ')')
+            radioButton.setText("%s    (%s%s)"%(video.resolution, video.extension, video.info))
             self.buttonGroup.addButton(radioButton)
             self.verticalLayout_2.addWidget(radioButton)
             if i==checked_btn : radioButton.setChecked(True)
@@ -163,3 +175,11 @@ class Media_Dialog(QDialog):
         self.downloadRequested.emit(reply, self.page_title)
         self.accept()   # quit dialog
 
+itag_list = [36,18,22,136,171]
+itag_dict = {
+    36: ["240p", "mp4", ""],
+    18: ["360p", "mp4", ""],
+    22: ["720p", "mp4", ""],
+    136: ["720p", "mp4", " No Audio"],
+    171: ["128kbps", "webm", " Audio"],
+}

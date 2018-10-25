@@ -23,6 +23,8 @@ Last Update :
             added : Download Videos option in right click context menu
             show warning when downloading filename already exists
             auto correct filename extensions
+            link is copied to clipboard in download confirm dialog
+            pytube version upgraded to 9.2.3
 
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |
@@ -50,7 +52,7 @@ Last Update :
 
 import os
 
-__version__ = "2.2.6"
+__version__ = "2.2.8"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"
