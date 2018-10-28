@@ -45,6 +45,7 @@ class YoutubeThread(QtCore.QThread):
 
 
 class YoutubeDialog(QDialog):
+    """ This dialog is used to select which resolution to download """
     def __init__(self, videos, parent):
         QDialog.__init__(self, parent)
         self.videos = videos
@@ -57,15 +58,13 @@ class YoutubeDialog(QDialog):
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame)
-        self.buttonGroup = QButtonGroup(self.frame)
-        if len(self.videos)>3: checked_btn = 1
-        else: checked_btn = len(self.videos)-1
+        self.buttonGroup = QButtonGroup(self.frame)                            
         for i, video in enumerate(self.videos):
             radioButton = QRadioButton(self.frame)
             radioButton.setText("%s    (%s%s)"%(video.resolution, video.extension, video.info))
             self.buttonGroup.addButton(radioButton)
             self.verticalLayout_2.addWidget(radioButton)
-            if i==checked_btn : radioButton.setChecked(True)
+            if i==1 : radioButton.setChecked(True)      # select 360p mp4 video
         spacerItem = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem)
         self.verticalLayout.addWidget(self.frame)
