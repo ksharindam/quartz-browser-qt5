@@ -15,16 +15,8 @@ Features =  Change User agent to mobile/desktop
             Tabbed browsing
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
-Last Update :
-            HTML5 video downloader dialog added
-            Youtube Video is parsed in separate thread
-            fixed : multiple file upload crash
-            autorenames files that exist already
-            added : Download Videos option in right click context menu
-            show warning when downloading filename already exists
-            auto correct filename extensions
-            link is copied to clipboard in download confirm dialog
-            pytube version upgraded to 9.2.3
+Changelog :
+2.2.9   added : 1080p video in youtube downloader
 
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |
@@ -52,7 +44,7 @@ Last Update :
 
 import os
 
-__version__ = "2.2.8"
+__version__ = "2.2.9"
 
 homedir = os.environ['HOME']
 downloaddir = homedir+"/Downloads/"

@@ -157,6 +157,7 @@ class Media_Dialog(QDialog):
         self.page_title = webpage.mainFrame().title()
 
     def viewSource(self):
+        """ View source code of <video> tag, not implemented yet"""
         pass
 
     def copyLink(self):
@@ -174,11 +175,12 @@ class Media_Dialog(QDialog):
         self.downloadRequested.emit(reply, self.page_title)
         self.accept()   # quit dialog
 
-itag_list = [36,18,22,136,171]
+itag_list = [36,18,22,136,137,171]
 itag_dict = {
     36: ["240p", "mp4", ""],
     18: ["360p", "mp4", ""],
     22: ["720p", "mp4", ""],
     136: ["720p", "mp4", " No Audio"],
+    137: ["1080p", "mp4", " No Audio"],
     171: ["128kbps", "webm", " Audio"],
 }
