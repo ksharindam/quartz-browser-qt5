@@ -1,10 +1,11 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys, shlex, os, subprocess
+import sys, shlex, os, subprocess, time
 sys.path.append(os.path.dirname(__file__)) # A workout for enabling python 2 like import
 
-from . import __version__, homedir, downloaddir, program_dir
-from time import time
+from __init__ import __version__, homedir, downloaddir, program_dir
+
 from urllib.parse import urlparse, parse_qs
 
 from PyQt5.Qt import QStringListModel
@@ -22,13 +23,13 @@ from PyQt5.QtNetwork import QNetworkRequest
 from PyQt5.QtWebKit import QWebSettings
 from PyQt5.QtWebKitWidgets import QWebPage, QWebFrame
 
-from .ui_settings_dialog import Ui_SettingsDialog
-from .bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
-from .import_export import *
-from .download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml
-from .common import *
-from . import ui_download_confirm, youtube
-from . import resources_rc, webkit
+from ui_settings_dialog import Ui_SettingsDialog
+from bookmark_manager import Bookmarks_Dialog, Add_Bookmark_Dialog, History_Dialog, icon_dir
+from import_export import *
+from download_manager import Download, DownloadsModel, Downloads_Dialog, SaveAsHtml
+from common import *
+import ui_download_confirm, youtube
+import resources_rc, webkit
 
 docdir = homedir+"/Documents/"
 configdir = homedir+"/.config/quartz-browser/"
@@ -449,7 +450,7 @@ class Main(QMainWindow):
         reply = networkmanager.get(networkrequest)
         self.handleUnsupportedContent(reply)
 
-    def handleUnsupportedContent(self, reply, preset_filename=None):
+    def handleUnsupportedContent(self, reply, preset_filename=None, page_url=None):
         """ This is called when url content is a downloadable file. e.g- pdf,mp3,mp4 """
         if reply.rawHeaderList() == []:
             loop = QEventLoop()
@@ -507,7 +508,7 @@ class Main(QMainWindow):
                 return
 
             global downloads_list_file
-            newdownload = Download(networkmanager)
+            newdownload = Download(networkmanager, page_url)
             newdownload.startDownload(reply, filepath)
             newdownload.datachanged.connect(self.dwnldsmodel.datachanged)
             self.downloads.insert(0, newdownload)
@@ -632,7 +633,7 @@ class Main(QMainWindow):
         if (dialog.exec_() == QDialog.Accepted):
             title = addbmkdialog.titleEdit.text()
             addr = addbmkdialog.addressEdit.text()
-            imgfile = str(time()) + '.jpg'
+            imgfile = str(time.time()) + '.jpg'
             viewportsize = self.tabWidget.currentWidget().page().viewportSize()
             contentsize = QSize(640, 640)
             self.tabWidget.currentWidget().page().setViewportSize(contentsize)
@@ -964,3 +965,5 @@ def main():
     sys.exit(app.exec_())
 
 
+if __name__ == "__main__":
+    main()

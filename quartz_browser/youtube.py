@@ -8,8 +8,8 @@ from PyQt5.QtWidgets import ( QApplication, QDialog, QFrame, QVBoxLayout, QGridL
 from PyQt5.Qt import QItemSelectionModel
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkReply
 
-from .pytube import YouTube
-from .common import *
+from pytube import YouTube
+from common import *
 
 youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.*&v)=)([a-zA-Z0-9\-_])+')
 
@@ -122,7 +122,7 @@ class MediaTable(QTableWidget):
 
 
 class Media_Dialog(QDialog):
-    downloadRequested = QtCore.pyqtSignal(QNetworkReply, str)
+    downloadRequested = QtCore.pyqtSignal(QNetworkReply, str, str)
     def __init__(self, parent, webpage, networkmanager):
         self._networkmanager = networkmanager
         QDialog.__init__(self, parent)
@@ -172,7 +172,7 @@ class Media_Dialog(QDialog):
         request = QNetworkRequest(URL)
         request.setRawHeader(b'Referer', page_url.encode('utf-8'))
         reply = self._networkmanager.get(request)
-        self.downloadRequested.emit(reply, self.page_title)
+        self.downloadRequested.emit(reply, self.page_title, page_url)
         self.accept()   # quit dialog
 
 itag_list = [36,18,22,136,137,171]

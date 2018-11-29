@@ -17,7 +17,8 @@ Features =  Change User agent to mobile/desktop
             Youtube Video and HTML5 video downloader.
 Changelog :
 2.2.9   added : 1080p video in youtube downloader
-
+        uses absolute import
+        use referer header on download html5 videos.
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>            |
 |                                                                          |

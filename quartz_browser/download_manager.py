@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os, time, re, io
-from . import resources_rc
+import resources_rc
 from subprocess import Popen
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
@@ -14,10 +14,11 @@ from common import *
 
 class Download(QtCore.QObject):
     datachanged = QtCore.pyqtSignal()
-    def __init__(self, networkmanager):
+    def __init__(self, networkmanager, page_url=None):
         super(Download, self).__init__(networkmanager)
         self.downloadBuffer = QtCore.QByteArray()
         self.nam = networkmanager
+        self.page_url = page_url
         self.totalsize = 'Unknown'
         self.loadedsize = '- - -'
         self.progress = '- - -'
@@ -95,6 +96,7 @@ class Download(QtCore.QObject):
             self.loadedsize = self.file.size()
             if str(self.loadedsize) == self.totalsize : return
             request.setRawHeader(b'Range', 'bytes={}-'.format(self.loadedsize).encode('ascii') )
+            if self.page_url: request.setRawHeader(b'Referer', self.page_url.encode('utf-8'))
         else:
             self.file.resize(0)
             self.loadedsize = 0

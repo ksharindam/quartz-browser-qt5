@@ -5,8 +5,8 @@ from PyQt5.QtWidgets import QApplication, QInputDialog, QLineEdit, QFileDialog, 
 from PyQt5.QtWebKitWidgets import QWebPage, QWebView
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkCookie, QNetworkCookieJar, QNetworkAccessManager
 
-from . import __version__, homedir, downloaddir, program_dir
-from .common import *
+from __init__ import __version__, homedir, downloaddir, program_dir
+from common import *
 import os, shlex, subprocess
 from urllib import parse
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys, os
-from . import resources_rc
+import resources_rc
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.Qt import QItemSelectionModel
