@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QApplication, QInputDialog, QLineEdit, QFileDialog, 
 from PyQt5.QtWebKitWidgets import QWebPage, QWebView
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkCookie, QNetworkCookieJar, QNetworkAccessManager
 
-from __init__ import __version__, homedir, downloaddir, program_dir
 from common import *
 import os, shlex, subprocess
 from urllib import parse
@@ -207,37 +206,37 @@ class MyWebView(QWebView):
         menu = QMenu(self)
         if result.isContentSelected():
            copy_text_action = self.pageAction(QWebPage.Copy)
-           copy_text_action.setIcon(QIcon.fromTheme('edit-copy'))
+           copy_text_action.setIcon(QIcon(':/edit-copy.png'))
            menu.addAction(copy_text_action)
         if not result.imageUrl().isEmpty():
-           menu.addAction(QIcon.fromTheme('document-save'), "Save Image", self.saveImageToDisk)
+           menu.addAction(QIcon(':/document-save.png'), "Save Image", self.saveImageToDisk)
            download_image_action = self.pageAction(QWebPage.DownloadImageToDisk)
            download_image_action.setText("Download Image")
-           download_image_action.setIcon(QIcon.fromTheme('image-x-generic'))
+           download_image_action.setIcon(QIcon(':/image-x-generic.png'))
            menu.addAction(download_image_action)
            menu.addSeparator()
         if not result.linkUrl().isEmpty():
            open_new_win_action = self.pageAction(QWebPage.OpenLinkInNewWindow)
            open_new_win_action.setText('Open in New Tab')
-           open_new_win_action.setIcon(QIcon.fromTheme('list-add'))
+           open_new_win_action.setIcon(QIcon(':/list-add.png'))
            menu.addAction(open_new_win_action)
            copy_link_action = self.pageAction(QWebPage.CopyLinkToClipboard)
-           copy_link_action.setIcon(QIcon.fromTheme('applications-internet'))
+           copy_link_action.setIcon(QIcon(':/quartz.png'))
            menu.addAction(copy_link_action)
            download_link_action = self.pageAction(QWebPage.DownloadLinkToDisk)
            download_link_action.setText('Download Link')
-           download_link_action.setIcon(QIcon.fromTheme('document-save'))
+           download_link_action.setIcon(QIcon(':/document-save.png'))
            menu.addAction(download_link_action)
         if src != '':
            self.src_url = src
-           menu.addAction(QIcon.fromTheme('document-save'), 'Download Content', self.downloadContent)
-        auto_refresh_action = QAction(QIcon.fromTheme('view-refresh'), "Auto Refresh", self)
+           menu.addAction(QIcon(':/document-save.png'), 'Download Content', self.downloadContent)
+        auto_refresh_action = QAction(QIcon(':/view-refresh.png'), "Auto Refresh", self)
         auto_refresh_action.setCheckable(True)
         auto_refresh_action.setChecked(self.timer.isActive())
         auto_refresh_action.triggered.connect(self.toggleAutoRefresh)
         menu.addAction(auto_refresh_action)
         if result.imageUrl().isEmpty() and result.linkUrl().isEmpty():
-           edit_page_action = QAction(QIcon.fromTheme('accessories-text-editor'), "Edit Page", self)
+           edit_page_action = QAction(QIcon(':/edit.png'), "Edit Page", self)
            edit_page_action.setCheckable(True)
            edit_page_action.setChecked(self.page().isContentEditable())
            edit_page_action.triggered.connect(self.page().setContentEditable)
@@ -247,7 +246,7 @@ class MyWebView(QWebView):
         for frame in frames:
             video = frame.findFirstElement('video')
             if not video.isNull():
-                videos_action = QAction(QIcon.fromTheme('video-x-generic'), "Download Videos", self)
+                videos_action = QAction(QIcon(':/video-x-generic.png'), "Download Videos", self)
                 videos_action.triggered.connect(self.showVideos)
                 menu.addAction(videos_action)
                 break

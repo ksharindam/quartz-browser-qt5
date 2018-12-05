@@ -3,6 +3,15 @@ from urllib import parse
 from cgi import parse_header
 from PyQt5 import QtCore
 
+homedir = os.path.expanduser("~")
+downloaddir = homedir+"/Downloads/"
+docdir = homedir+"/Documents/"
+configdir = QtCore.QStandardPaths.writableLocation(13) + "/quartz-browser/"
+icon_dir = configdir + 'iconDB/'
+thumbnails_dir = configdir + 'thumbnails/'
+program_dir = os.path.dirname(os.path.abspath(__file__)) + '/'
+
+
 extensions = {
 'application/pdf': '.pdf',
 'audio/mpeg': '.mp3',
@@ -12,6 +21,7 @@ extensions = {
 'video/matroska': '.mkv',
 'image/jpeg': '.jpg',
 'image/png': '.png',
+'text/html': '.html',
 }
 
 def validateFileName(text, mimetype=None):

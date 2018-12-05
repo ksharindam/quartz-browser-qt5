@@ -4,13 +4,13 @@
 import sys, shlex, os, subprocess, time
 sys.path.append(os.path.dirname(__file__)) # A workout for enabling python 2 like import
 
-from __init__ import __version__, homedir, downloaddir, program_dir
+from __init__ import __version__
 
 from urllib.parse import urlparse, parse_qs
 
 from PyQt5.Qt import QStringListModel
 from PyQt5.QtCore import ( QUrl, pyqtSignal, Qt, QSettings, QSize, QPoint )
-from PyQt5.QtCore import QFileInfo, QByteArray, QEventLoop, QTimer
+from PyQt5.QtCore import QStandardPaths, QFileInfo, QByteArray, QEventLoop, QTimer
 
 from PyQt5.QtGui import QIcon, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import ( QApplication, QMainWindow, QWidget,
@@ -31,11 +31,8 @@ from common import *
 import ui_download_confirm, youtube
 import resources_rc, webkit
 
-docdir = homedir+"/Documents/"
-configdir = homedir+"/.config/quartz-browser/"
 downloads_list_file = configdir+"downloads.txt"
-thumbnails_dir = configdir + 'thumbnails/'
-homepage = 'file://' + program_dir + 'home.html'
+homepage = QUrl.fromLocalFile(program_dir + 'home.html').toString()
 
 
 class Main(QMainWindow):
@@ -115,30 +112,30 @@ class Main(QMainWindow):
 ################ Add Actions to Menu ####################
         # This sub-menu sets useragent mode to desktop/mobile/custom
         self.useragentMenu = QMenu('UserAgent', self)
-        self.useragentMenu.setIcon(QIcon.fromTheme("computer"))
+        self.useragentMenu.setIcon(QIcon(":/computer.png"))
         self.useragentMenu.addAction(self.useragent_mode_desktop)
         self.useragentMenu.addAction(self.useragent_mode_mobile)
         self.useragentMenu.addAction(self.useragent_mode_custom)
 
         # This is main menu
         self.menu = QMenu(self)
-        self.menu.addAction(QIcon.fromTheme("edit-find"), "Find Text", self.findmode, "Ctrl+F")
-        self.menu.addAction(QIcon.fromTheme("list-add"), "Zoom In", self.zoomin, "Ctrl++")
-        self.menu.addAction(QIcon.fromTheme("list-remove"), "Zoom Out", self.zoomout, "Ctrl+-")
-        self.menu.addAction(QIcon.fromTheme("view-fullscreen"), "Toggle Fullscreen", self.fullscreenmode, "F11")
+        self.menu.addAction(QIcon(":/edit-find.png"), "Find Text", self.findmode, "Ctrl+F")
+        self.menu.addAction(QIcon(":/list-add.png"), "Zoom In", self.zoomin, "Ctrl++")
+        self.menu.addAction(QIcon(":/list-remove.png"), "Zoom Out", self.zoomout, "Ctrl+-")
+        self.menu.addAction(QIcon(":/view-fullscreen.png"), "Toggle Fullscreen", self.fullscreenmode, "F11")
         self.menu.addSeparator()
 
         self.menu.addAction(self.loadimagesaction)
         self.menu.addAction(self.javascriptmode)
         self.menu.addMenu(self.useragentMenu)
-        self.menu.addAction(QIcon.fromTheme("applications-system"), "Settings", self.settingseditor, "Ctrl+,")
+        self.menu.addAction(QIcon(":/applications-system.png"), "Settings", self.settingseditor, "Ctrl+,")
         self.menu.addSeparator()
 
-        self.menu.addAction(QIcon.fromTheme("image-x-generic"), "Save as Image", self.saveAsImage, "Shift+Ctrl+S")
-        self.menu.addAction(QIcon.fromTheme("text-html"), "Save as HTML", self.saveashtml, "Ctrl+S")
-        self.menu.addAction(QIcon.fromTheme("document-print"), "Print to PDF", self.printpage, "Ctrl+P")
+        self.menu.addAction(QIcon(":/image-x-generic.png"), "Save as Image", self.saveAsImage, "Shift+Ctrl+S")
+        self.menu.addAction(QIcon(":/text-html.png"), "Save as HTML", self.saveashtml, "Ctrl+S")
+        self.menu.addAction(QIcon(":/document-print.png"), "Print to PDF", self.printpage, "Ctrl+P")
         self.menu.addSeparator()
-        self.menu.addAction(QIcon.fromTheme("process-stop"), "Quit", self.forceClose, "Ctrl+Q")
+        self.menu.addAction(QIcon(":/process-stop.png"), "Quit", self.forceClose, "Ctrl+Q")
 
         self.bmk_menu = QMenu(self)
         self.bmk_menu.addAction(QIcon(':/add-bookmark.png'), 'Add Bookmark', self.addbookmark)
@@ -892,8 +889,9 @@ class Main(QMainWindow):
         # Delete excess icons
         icons = [ x for x in os.listdir(icon_dir) if x.endswith('.png') ]
         for bmk in self.bookmarks:
-            if bmk[1].split('/')[2] + '.png' in icons:
-                icons.remove(bmk[1].split('/')[2] + '.png')
+            host = QUrl(bmk[1]).host()
+            if host + '.png' in icons:
+                icons.remove(host + '.png')
         for f in icons: os.remove( icon_dir + f )
         super(Main, self).closeEvent(event)
 
@@ -955,7 +953,7 @@ def main():
     # Go to url from argument
     if len(sys.argv)> 1:
         if sys.argv[1].startswith("/"):
-            url = "file://"+sys.argv[1]
+            url = QUrl.fromLocalFile(sys.argv[1]).toString()
         else:
             url = sys.argv[1]
         window.GoTo(url)

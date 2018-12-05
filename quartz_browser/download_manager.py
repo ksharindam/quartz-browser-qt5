@@ -247,17 +247,17 @@ class DownloadsTable(QTableView):
         if len(self.selectedIndexes())==4:
             if self.model().downloadlist[self.rowClicked].progress == '- - -':
                 if self.model().downloadlist[self.rowClicked].support_resume:
-                  menu.addAction(QIcon.fromTheme('media-playback-start'), "Resume", self.pause_resume)
+                  menu.addAction(QIcon(':/media-playback-start.png'), "Resume", self.pause_resume)
                 else:
-                  menu.addAction(QIcon.fromTheme('view-refresh'), "Restart", self.pause_resume)
+                  menu.addAction(QIcon(':/view-refresh.png'), "Restart", self.pause_resume)
             else:
                 if self.model().downloadlist[self.rowClicked].support_resume:
-                    menu.addAction(QIcon.fromTheme('media-playback-pause'), "Pause", self.pause_resume)
+                    menu.addAction(QIcon(':/media-playback-pause.png'), "Pause", self.pause_resume)
                 else:
-                    menu.addAction(QIcon.fromTheme('process-stop'), "Stop", self.pause_resume)
-            menu.addAction(QIcon.fromTheme('edit-copy'), "Copy Address", self.copy_address)
-        menu.addAction(QIcon.fromTheme('edit-clear'), "Remove Download", self.remove_selected)
-        menu.addAction(QIcon.fromTheme('edit-delete'), "Delete File(s)", self.delete_selected)
+                    menu.addAction(QIcon(':/process-stop.png'), "Stop", self.pause_resume)
+            menu.addAction(QIcon(':/edit-copy.png'), "Copy Address", self.copy_address)
+        menu.addAction(QIcon(':/list-remove.png'), "Remove Download", self.remove_selected)
+        menu.addAction(QIcon(':/edit-delete.png'), "Delete File(s)", self.delete_selected)
         menu.exec_(self.mapToGlobal(self.rel_pos + offset))
     def pause_resume(self):
         if self.model().downloadlist[self.rowClicked].progress == '- - -':

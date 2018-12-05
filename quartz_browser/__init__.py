@@ -43,10 +43,6 @@ Changelog :
 # FIXME : 
 #       
 
-import os
 
-__version__ = "2.2.9"
+__version__ = "2.3.0"
 
-homedir = os.environ['HOME']
-downloaddir = homedir+"/Downloads/"
-program_dir = os.path.dirname(os.path.abspath(__file__)) + '/'

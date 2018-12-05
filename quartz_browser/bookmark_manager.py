@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import ( QApplication, QLineEdit, QTableWidget, QTableWidge
     QHeaderView, QDialog, QGridLayout, QLabel, QTabWidget,
     QPushButton, QDialogButtonBox )
 
+from common import *
+
 def _fromUtf8(s):
     return s
 
@@ -20,7 +22,6 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QApplication.translate(context, text, disambig)
 
-icon_dir = os.path.expanduser('~/.config/quartz-browser/iconDB') + '/'
 
 class UrlBox(QLineEdit):
     def __init__(self, parent):
@@ -59,8 +60,8 @@ class BookmarksTable(QTableWidget):
             font.setBold(True)
             title_item.setFont(font)
             if self.use_icons:
-                icon = QIcon(icon_dir + item[1].split('/')[2] + '.png')
-                if icon.pixmap(16, 16).isNull(): icon = QIcon.fromTheme('applications-internet')
+                icon = QIcon(icon_dir + QtCore.QUrl(item[1]).host() + '.png')
+                if icon.pixmap(16, 16).isNull(): icon = QIcon(':/quartz.png')
                 title_item.setIcon(icon)
             self.setItem(row, 0, title_item)
 
