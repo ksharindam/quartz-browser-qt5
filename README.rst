@@ -1,6 +1,6 @@
-Quartz Browser for Linux
-========================
-A useful fast Web Browser for linux written in pyqt5 webkit
+Quartz Browser for Windows and Linux
+====================================
+A useful fast Web Browser written in pyqt5 webkit
 
 **Dependency**
 
