@@ -16,10 +16,11 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Changelog :
+2.3.1   kiosk mode added
+2.3.0   Initial windows support
 2.2.9   added : 1080p video in youtube downloader
         uses absolute import
         use referer header on download html5 videos.
-2.3.0   Initial windows support
 
 ...........................................................................
 |   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>       |
@@ -41,10 +42,10 @@ Changelog :
 # TODO : 
 #       Multiple search engines
 #       View source in context menu
-#       
+#       View source in video download dialog
 # FIXME : 
 #       
 
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 

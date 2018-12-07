@@ -47,10 +47,14 @@ Or
 
 ``$ ./quartz http://www.google.com`` 
 
+Command Line Options
+--------------------
+--kiosk = Enable kiosk mode
+
 Important Features :
 --------------------
 
-* Auto Refresh Mode  
+* Auto Refresh Mode, Kiosk Mode  
 * Turn Javascript, Load Images on/off  option in main menu  
 * Save as PDF, Save as HTML  
 * Export full page as PNG/JPEG image, HTML file  

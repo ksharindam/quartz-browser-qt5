@@ -9,6 +9,8 @@ from common import *
 import os, shlex, subprocess
 from urllib import parse
 
+KIOSK_MODE = False
+
 js_debug_mode = False
 enable_adblock = True
 block_fonts = False
@@ -140,6 +142,10 @@ class MyWebPage(QWebPage):
 
 
 class MyWebView(QWebView):
+    ''' parameters
+        @parent -> QTabWidget
+        @networkmanager -> NetworkAccessManager
+    '''
     windowCreated = pyqtSignal(QWebView)
     videoListRequested = pyqtSignal()
     def __init__(self, parent, networkmanager):
@@ -192,6 +198,9 @@ class MyWebView(QWebView):
 
     def contextMenuEvent(self, event):
         """ Overrides the default context menu"""
+        # No context menu in kiosk mode
+        if KIOSK_MODE : return
+        # Get source code at mouse click pos
         result = self.page().mainFrame().hitTestContent(event.pos())
         element = result.element()
         child = element.firstChild()
@@ -291,6 +300,7 @@ class MyWebView(QWebView):
             self.timer.stop()
             self.timer.start()
 
+
 class UrlEdit(QLineEdit):
     """ Reimplemented QLineEdit to get all selected when double clicked"""
     downloadRequested = pyqtSignal(QNetworkRequest)
@@ -350,6 +360,7 @@ class UrlEdit(QLineEdit):
 
     def setIcon(self, icon):
         self.iconButton.setIcon(icon)
+
 
 def validUrl(url_str):
     """ This checks if the url is valid. Used in GoTo() func"""

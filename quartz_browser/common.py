@@ -13,15 +13,15 @@ program_dir = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 
 extensions = {
-'application/pdf': '.pdf',
-'audio/mpeg': '.mp3',
-'video/mpeg': '.mp4',
-'video/mp4': '.mp4',
-'video/3gpp': '.3gp',
-'video/matroska': '.mkv',
-'image/jpeg': '.jpg',
-'image/png': '.png',
-'text/html': '.html',
+'application/pdf':  '.pdf',
+'audio/mpeg':       '.mp3',
+'video/mpeg':       '.mp4',
+'video/mp4':        '.mp4',
+'video/3gpp':       '.3gp',
+'video/matroska':   '.mkv',
+'image/jpeg':       '.jpg',
+'image/png':        '.png',
+'text/html':        '.html',
 }
 
 def validateFileName(text, mimetype=None):
@@ -78,3 +78,9 @@ def filenameFromUrl(addr):
 def str_(byte_array):
     return bytes(byte_array).decode('utf-8')
 
+# Used for argument parsing
+def hasArg(argname, arglist):
+    for arg in arglist:
+        if arg==argname:
+            return True
+    return False

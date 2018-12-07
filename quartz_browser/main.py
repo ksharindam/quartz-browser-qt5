@@ -16,7 +16,7 @@ from PyQt5.QtGui import QIcon, QPainter, QPixmap, QFont
 from PyQt5.QtWidgets import ( QApplication, QMainWindow, QWidget,
     QFileDialog, QDialog, QListView,
     QLineEdit, QCompleter, QComboBox, QPushButton, QToolButton, QAction, QMenu,
-    QGridLayout, QProgressBar, QMessageBox, QInputDialog, QLabel,
+    QGridLayout, QHBoxLayout, QProgressBar, QMessageBox, QInputDialog, QLabel,
     QTabWidget )
 from PyQt5.QtPrintSupport import QPrinter, QPrintPreviewDialog
 from PyQt5.QtNetwork import QNetworkRequest
@@ -142,12 +142,16 @@ class Main(QMainWindow):
         self.bmk_menu.addAction(QIcon(':/favourites.png'), 'Add to Home', self.addToFavourites)
         
 ###############################  Create Gui Parts ##############################
-        grid = QGridLayout()
+        self.centralwidget = QWidget(self)
+        self.setCentralWidget(self.centralwidget)
+        grid = QGridLayout(self.centralwidget)
         grid.setSpacing(1)
         grid.setContentsMargins(0,2,0,0)
-        self.centralwidget = QWidget(self)
-        self.centralwidget.setLayout(grid)
-        self.setCentralWidget(self.centralwidget)
+
+        self.toolBar = QWidget(self)
+        horLayout = QHBoxLayout(self.toolBar)
+        horLayout.setSpacing(1)
+        horLayout.setContentsMargins(0,2,0,0)
 
         self.addtabBtn = QPushButton(QIcon(":/add-tab.png"), "",self)
         self.addtabBtn.setToolTip("New Tab\n[Ctrl+Tab]")
@@ -161,12 +165,12 @@ class Main(QMainWindow):
         self.reload.clicked.connect(self.Reload)
 
         self.back = QPushButton(QIcon(":/prev.png"), "", self) 
-        self.back.setToolTip("Previous Page\n [Backspace]")
+        self.back.setToolTip("Previous Page")
         self.back.setMinimumSize(35,26) 
         self.back.clicked.connect(self.Back)
 
         self.forw = QPushButton(QIcon(":/next.png"), "",self) 
-        self.forw.setToolTip("Next Page\n [Shift+Backspace]")
+        self.forw.setToolTip("Next Page")
         self.forw.setMinimumSize(35,26) 
         self.forw.clicked.connect(self.Forward)
 
@@ -249,12 +253,12 @@ class Main(QMainWindow):
         self.addTab()
         self.applysettings()
 #       
-
-        for index, widget in enumerate([self.addtabBtn, self.back, self.forw, self.reload, self.homeBtn, self.videoDownloadButton,
+        grid.addWidget(self.toolBar, 0,0, 1,1)
+        for widget in [self.addtabBtn, self.back, self.forw, self.reload, self.homeBtn, self.videoDownloadButton,
                 self.pbar, self.find, self.findprev, self.cancelfind, self.addbookmarkBtn, self.menuBtn,
-                self.bookmarkBtn, self.historyBtn, self.downloadsBtn]):
-            grid.addWidget(widget, 0,index,1,1)
-        grid.addWidget(self.tabWidget, 2, 0, 1, 15)
+                self.bookmarkBtn, self.historyBtn, self.downloadsBtn]:
+            horLayout.addWidget(widget)
+        grid.addWidget(self.tabWidget, 1, 0, 1, 1)
 
 #------------------------------------------------------------------------------------------
 #        Must be at the end, otherwise cause segmentation fault
@@ -866,6 +870,12 @@ class Main(QMainWindow):
         self.websettings.setFontFamily(QWebSettings.FixedFont, self.fixedfontval)
 #        self.websettings.setFontSize(QWebSettings.DefaultFontSize, 14)
 
+    def enableKiosk(self):
+        webkit.KIOSK_MODE = True
+        self.menu.clear()
+        self.toolBar.hide()
+        self.showFullScreen()
+
     def forceClose(self):
         self.confirm_before_quit = False
         self.close()
@@ -946,16 +956,20 @@ def main():
     networkmanager.setCookieJar(cookiejar)
     window = Main()
     # Maximize after startup or Show normal 
-    if window.maximize_window:
+    if hasArg('--kiosk', sys.argv):
+        window.enableKiosk()
+    elif window.maximize_window:
         window.showMaximized()
     else:
         window.show()
     # Go to url from argument
-    if len(sys.argv)> 1:
-        if sys.argv[1].startswith("/"):
-            url = QUrl.fromLocalFile(sys.argv[1]).toString()
+    url = None
+    if len(sys.argv)> 1 and not sys.argv[-1].startswith('-'):
+        if os.path.exists(sys.argv[-1]):
+            url = QUrl.fromLocalFile(os.path.abspath(sys.argv[-1])).toString()
         else:
-            url = sys.argv[1]
+            url = sys.argv[-1]
+    if url:
         window.GoTo(url)
     else:
         window.goToHome()
