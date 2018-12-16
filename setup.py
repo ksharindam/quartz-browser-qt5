@@ -28,7 +28,7 @@ setup(
     'Environment :: X11 Applications :: Qt',
     'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     'Operating System :: POSIX :: Linux',
-    'Operating System :: Windows',
+    'Operating System :: Microsoft',
     'Programming Language :: Python :: 3.5',
     'Topic :: Internet :: WWW/HTTP :: Browsers',
     ],

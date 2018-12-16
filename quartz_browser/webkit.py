@@ -82,8 +82,9 @@ class NetworkAccessManager(QNetworkAccessManager):
                     break
 
         if block:
-#            print("Blocked: "+url)
+            #print("Blocked: "+url)
             return QNetworkAccessManager.createRequest(self, op, QNetworkRequest(QUrl()), device)
+        #print(url)
 
         reply = QNetworkAccessManager.createRequest(self, op, request, device)
         #reply.metaDataChanged.connect(self.gotMetadata)
