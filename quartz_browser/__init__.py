@@ -16,6 +16,7 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Changelog :
+2.3.2   added : copy url button in history dialog
 2.3.1   kiosk mode added
 2.3.0   Initial windows support
 2.2.9   added : 1080p video in youtube downloader
@@ -23,7 +24,7 @@ Changelog :
         use referer header on download html5 videos.
 
 ...........................................................................
-|   Copyright (C) 2017-2018 Arindam Chaudhuri <ksharindam@gmail.com>       |
+|   Copyright (C) 2017-2019 Arindam Chaudhuri <ksharindam@gmail.com>       |
 |                                                                          |
 |   This program is free software: you can redistribute it and/or modify   |
 |   it under the terms of the GNU General Public License as published by   |
@@ -47,5 +48,5 @@ Changelog :
 #       
 
 
-__version__ = "2.3.1"
+__version__ = "2.3.2"
 

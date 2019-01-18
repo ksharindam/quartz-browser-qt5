@@ -255,10 +255,10 @@ class History_Dialog(object):
         Dialog.setWindowTitle("Browsing History")
         Dialog.resize(740, 450)
         self.layout = QGridLayout(Dialog)
-        self.urlLabel = QLabel('URL :', Dialog)
-        self.layout.addWidget(self.urlLabel, 0, 0, 1, 1)
         self.urlBox = UrlBox(Dialog)
-        self.layout.addWidget(self.urlBox, 0, 1, 1, 1)
+        self.layout.addWidget(self.urlBox, 0, 0, 1, 1)
+        self.copyUrlBtn = QPushButton('copy', Dialog)
+        self.layout.addWidget(self.copyUrlBtn, 0, 1, 1, 1)
         self.tableView = BookmarksTable(Dialog, history_data)
         self.layout.addWidget(self.tableView, 1, 0, 1, 2)
         self.buttonBox = QDialogButtonBox(Dialog)
@@ -266,8 +266,14 @@ class History_Dialog(object):
         self.buttonBox.setStandardButtons(QDialogButtonBox.Close)
         self.layout.addWidget(self.buttonBox, 2, 0, 1, 2)
 
+        self.copyUrlBtn.clicked.connect(self.copyUrl)
         self.tableView.urlSelected.connect(self.urlBox.setText)
         self.tableView.doubleclicked.connect(Dialog.accept)
         self.buttonBox.accepted.connect(Dialog.accept)
         self.buttonBox.rejected.connect(Dialog.reject)
+
+    def copyUrl(self):
+        url = self.urlBox.text()
+        if url != '':
+            QApplication.clipboard().setText(url)
 
