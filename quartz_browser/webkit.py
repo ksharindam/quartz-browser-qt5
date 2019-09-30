@@ -89,7 +89,7 @@ class NetworkAccessManager(QNetworkAccessManager):
         reply = QNetworkAccessManager.createRequest(self, op, request, device)
         #reply.metaDataChanged.connect(self.gotMetadata)
         return reply
-        
+
     def gotMetadata(self):
         ''' Prints raw Headers of requested url '''
         reply = self.sender()
@@ -107,7 +107,8 @@ class MyWebPage(QWebPage):
         self.setForwardUnsupportedContent(True)
         self.setLinkDelegationPolicy(2)
         self.setNetworkAccessManager(networkmanager)
-        self.useragent_desktop = QWebPage.userAgentForUrl(self, QUrl())
+        #self.useragent_desktop = QWebPage.userAgentForUrl(self, QUrl())
+        self.useragent_desktop = "Mozilla/5.0 (X11; Linux) AppleWebKit/538.1 (KHTML, like Gecko) Quartz Safari/538.1"
         self.useragent_mobile = 'Nokia 5130'
 
     def userAgentForUrl(self, url):
@@ -319,7 +320,7 @@ class UrlEdit(QLineEdit):
         self.iconButton.clicked.connect(self.selectAll)
         self.setIcon(QIcon(':/quartz.png'))
         #self.setStyleSheet("QLineEdit { background-image:url(:/search.png);background-repeat:no-repeat;\
-        #                         padding: 2 2 2 24 ;font-size:15px;}") 
+        #                         padding: 2 2 2 24 ;font-size:15px;}")
 
     def mouseDoubleClickEvent(self, event):
         self.selectAll()
@@ -334,7 +335,7 @@ class UrlEdit(QLineEdit):
         if ( "." not in text) or (" " in text): # If text is not valid url
             url = "https://www.google.com/search?q="+text
             url = url.replace('+', '%2B')
-            self.setText(url) 
+            self.setText(url)
         self.openUrlRequested.emit()
 
     def contextMenuEvent(self,event):

@@ -36,10 +36,10 @@ homepage = QUrl.fromLocalFile(program_dir + 'home.html').toString()
 
 
 class Main(QMainWindow):
-    def __init__(self): 
+    def __init__(self):
         global downloads_list_file
         QMainWindow.__init__(self)
-        self.setWindowIcon(QIcon(":/quartz.png")) 
+        self.setWindowIcon(QIcon(":/quartz.png"))
         self.setWindowTitle("Quartz Browser - "+__version__)
         # Window Properties
         self.history = []
@@ -140,7 +140,7 @@ class Main(QMainWindow):
         self.bmk_menu = QMenu(self)
         self.bmk_menu.addAction(QIcon(':/add-bookmark.png'), 'Add Bookmark', self.addbookmark)
         self.bmk_menu.addAction(QIcon(':/favourites.png'), 'Add to Home', self.addToFavourites)
-        
+
 ###############################  Create Gui Parts ##############################
         self.centralwidget = QWidget(self)
         self.setCentralWidget(self.centralwidget)
@@ -158,23 +158,23 @@ class Main(QMainWindow):
         self.addtabBtn.setShortcut("Ctrl+Tab")
         self.addtabBtn.clicked.connect(self.addTab)
 
-        self.reload = QPushButton(QIcon(":/refresh.png"), "",self) 
-        self.reload.setMinimumSize(35,26) 
+        self.reload = QPushButton(QIcon(":/refresh.png"), "",self)
+        self.reload.setMinimumSize(35,26)
         self.reload.setToolTip("Reload/Stop\n  [Space]")
         self.reload.setShortcut("Space")
         self.reload.clicked.connect(self.Reload)
 
-        self.back = QPushButton(QIcon(":/prev.png"), "", self) 
+        self.back = QPushButton(QIcon(":/prev.png"), "", self)
         self.back.setToolTip("Previous Page")
-        self.back.setMinimumSize(35,26) 
+        self.back.setMinimumSize(35,26)
         self.back.clicked.connect(self.Back)
 
-        self.forw = QPushButton(QIcon(":/next.png"), "",self) 
+        self.forw = QPushButton(QIcon(":/next.png"), "",self)
         self.forw.setToolTip("Next Page")
-        self.forw.setMinimumSize(35,26) 
+        self.forw.setMinimumSize(35,26)
         self.forw.clicked.connect(self.Forward)
 
-        self.homeBtn = QPushButton(QIcon(":/home.png"), "",self) 
+        self.homeBtn = QPushButton(QIcon(":/home.png"), "",self)
         self.homeBtn.setToolTip("Go Home")
         self.homeBtn.clicked.connect(self.goToHome)
 
@@ -220,7 +220,7 @@ class Main(QMainWindow):
         self.cancelfind.clicked.connect(self.cancelfindmode)
         self.cancelfind.hide()
 
-        self.pbar = QProgressBar(self) 
+        self.pbar = QProgressBar(self)
         self.pbar.setTextVisible(False)
         self.pbar.setStyleSheet("QProgressBar::chunk { background-color: #bad8ff; }")
         pbarLayout = QGridLayout(self.pbar)
@@ -252,7 +252,7 @@ class Main(QMainWindow):
         self.tabWidget.tabCloseRequested.connect(self.closeTab)
         self.addTab()
         self.applysettings()
-#       
+#
         grid.addWidget(self.toolBar, 0,0, 1,1)
         for widget in [self.addtabBtn, self.back, self.forw, self.reload, self.homeBtn, self.videoDownloadButton,
                 self.pbar, self.find, self.findprev, self.cancelfind, self.addbookmarkBtn, self.menuBtn,
@@ -262,16 +262,16 @@ class Main(QMainWindow):
 
 #------------------------------------------------------------------------------------------
 #        Must be at the end, otherwise cause segmentation fault
-#       self.status = self.statusBar() 
+#       self.status = self.statusBar()
 
     def addTab(self, webview_tab=None):
         """ Creates a new tab and add to QTabWidget
             applysettings() must be called after adding each tab"""
         if not webview_tab:
-            webview_tab = webkit.MyWebView(self.tabWidget, networkmanager) 
+            webview_tab = webkit.MyWebView(self.tabWidget, networkmanager)
         webview_tab.windowCreated.connect(self.addTab)
-        webview_tab.loadStarted.connect(self.onLoadStart) 
-        webview_tab.loadFinished.connect(self.onLoadFinish) 
+        webview_tab.loadStarted.connect(self.onLoadStart)
+        webview_tab.loadFinished.connect(self.onLoadFinish)
         webview_tab.loadProgress.connect(self.onProgress)
         webview_tab.urlChanged.connect(self.onUrlChange)
         webview_tab.titleChanged.connect(self.onTitleChange)
@@ -307,7 +307,7 @@ class Main(QMainWindow):
         index = self.tabWidget.indexOf(webview)
         self.closeTab(index)
 
-    def Enter(self): 
+    def Enter(self):
         url = self.line.text()
         if url == 'about:home':
             self.goToHome()
@@ -406,9 +406,9 @@ class Main(QMainWindow):
         self.statusbar.show()
         self.statusbar.move(QPoint(0, self.height()-self.statusbar.height()))
 
-    def Back(self): 
-        self.tabWidget.currentWidget().back() 
-    def Forward(self): 
+    def Back(self):
+        self.tabWidget.currentWidget().back()
+    def Forward(self):
         self.tabWidget.currentWidget().forward()
     def Reload(self):
         if self.tabWidget.currentWidget().loading:
@@ -754,7 +754,7 @@ class Main(QMainWindow):
             self.useragent_mode_desktop.setChecked(False)
 
 ########################## Settings Portion #########################
-    def settingseditor(self):  
+    def settingseditor(self):
         """ Opens the settings manager dialog, then applies the change"""
         dialog = QDialog(self)
         websettingsdialog = Ui_SettingsDialog()
@@ -807,7 +807,7 @@ class Main(QMainWindow):
             self.applysettings()
             self.savesettings()
 
-    def opensettings(self): 
+    def opensettings(self):
         """ Reads settings file in ~/.config/quartz-browser/ directory and
             saves values in settings variables"""
         webkit.enable_adblock = _bool(self.settings.value('EnableAdblock', True))
@@ -955,7 +955,7 @@ def main():
     networkmanager = webkit.NetworkAccessManager(QApplication.instance())
     networkmanager.setCookieJar(cookiejar)
     window = Main()
-    # Maximize after startup or Show normal 
+    # Maximize after startup or Show normal
     if hasArg('--kiosk', sys.argv):
         window.enableKiosk()
     elif window.maximize_window:

@@ -16,6 +16,8 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Changelog :
+2.3.5   pytube is now optional
+2.3.4   useragent changed to fix youtube lags
 2.3.3   pytube updated
 2.3.2   added : copy url button in history dialog
 2.3.1   kiosk mode added
@@ -41,13 +43,13 @@ Changelog :
 |   along with this program.  If not, see <http://www.gnu.org/licenses/>.  |
 ...........................................................................
 """
-# TODO : 
+# TODO :
 #       Multiple search engines
 #       View source in context menu
 #       View source in video download dialog
-# FIXME : 
-#       
+# FIXME :
+#
 
 
-__version__ = "2.3.3"
+__version__ = "2.3.5"
 

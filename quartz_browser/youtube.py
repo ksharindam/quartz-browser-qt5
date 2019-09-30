@@ -8,13 +8,17 @@ from PyQt5.QtWidgets import ( QApplication, QDialog, QFrame, QVBoxLayout, QGridL
 from PyQt5.Qt import QItemSelectionModel
 from PyQt5.QtNetwork import QNetworkRequest, QNetworkReply
 
-from pytube import YouTube
 from common import *
+try:
+    from pytube import YouTube
+    has_pytube = True
+except:
+    has_pytube = False
 
 youtube_regex = re.compile('http(s)?\:\/\/((m\.|www\.)?youtube\.com\/watch\?(v|.*&v)=)([a-zA-Z0-9\-_])+')
 
 def validYoutubeUrl(url):
-    if youtube_regex.match(url):
+    if has_pytube and youtube_regex.match(url):
         return True
 
 class Video():
@@ -58,7 +62,7 @@ class YoutubeDialog(QDialog):
         self.frame.setFrameShape(QFrame.StyledPanel)
         self.frame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame)
-        self.buttonGroup = QButtonGroup(self.frame)                            
+        self.buttonGroup = QButtonGroup(self.frame)
         for i, video in enumerate(self.videos):
             radioButton = QRadioButton(self.frame)
             radioButton.setText("%s    (%s%s)"%(video.resolution, video.extension, video.info))
