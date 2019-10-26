@@ -48,7 +48,7 @@ class Main(QMainWindow):
         # Create required directories
         for folder in [configdir, icon_dir, thumbnails_dir]:
             if not os.path.exists(folder):
-                os.mkdir(folder)
+                os.makedirs(folder)
         # Import and Apply Settings
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.settings = QSettings(1, 0, "quartz-browser","Quartz", self)
