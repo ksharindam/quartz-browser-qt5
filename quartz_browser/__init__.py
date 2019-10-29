@@ -16,6 +16,7 @@ Features =  Change User agent to mobile/desktop
             Download Manager with pause/resume support
             Youtube Video and HTML5 video downloader.
 Changelog :
+2.3.7   2px white line in the top has been removed
 2.3.6   fixed : crash due to absence of .config directory
 2.3.5   pytube is now optional
 2.3.4   useragent changed to fix youtube lags
@@ -52,5 +53,5 @@ Changelog :
 #
 
 
-__version__ = "2.3.6"
+__version__ = "2.3.7"
 

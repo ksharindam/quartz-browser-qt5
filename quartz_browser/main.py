@@ -144,9 +144,9 @@ class Main(QMainWindow):
 ###############################  Create Gui Parts ##############################
         self.centralwidget = QWidget(self)
         self.setCentralWidget(self.centralwidget)
-        grid = QGridLayout(self.centralwidget)
-        grid.setSpacing(1)
-        grid.setContentsMargins(0,2,0,0)
+        self.grid = QGridLayout(self.centralwidget)
+        self.grid.setSpacing(1)
+        self.grid.setContentsMargins(0,2,0,0)
 
         self.toolBar = QWidget(self)
         horLayout = QHBoxLayout(self.toolBar)
@@ -253,12 +253,12 @@ class Main(QMainWindow):
         self.addTab()
         self.applysettings()
 #
-        grid.addWidget(self.toolBar, 0,0, 1,1)
+        self.grid.addWidget(self.toolBar, 0,0, 1,1)
         for widget in [self.addtabBtn, self.back, self.forw, self.reload, self.homeBtn, self.videoDownloadButton,
                 self.pbar, self.find, self.findprev, self.cancelfind, self.addbookmarkBtn, self.menuBtn,
                 self.bookmarkBtn, self.historyBtn, self.downloadsBtn]:
             horLayout.addWidget(widget)
-        grid.addWidget(self.tabWidget, 1, 0, 1, 1)
+        self.grid.addWidget(self.tabWidget, 1, 0, 1, 1)
 
 #------------------------------------------------------------------------------------------
 #        Must be at the end, otherwise cause segmentation fault
@@ -873,6 +873,7 @@ class Main(QMainWindow):
     def enableKiosk(self):
         webkit.KIOSK_MODE = True
         self.menu.clear()
+        self.grid.setContentsMargins(0,0,0,0)
         self.toolBar.hide()
         self.showFullScreen()
 
