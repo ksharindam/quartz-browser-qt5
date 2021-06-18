@@ -9,3 +9,4 @@ cache/
 debian/
 dist/
 *.egg-info/
+*.AppImage

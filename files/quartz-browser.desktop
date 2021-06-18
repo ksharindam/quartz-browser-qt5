@@ -1,11 +1,10 @@
 [Desktop Entry]
-Version=1.0
 Type=Application
 Name=Quartz Browser
 Comment=Light weight web browser
-Exec=quartz %f
+Exec=quartz_browser %f
 Icon=quartz-browser
-Categories= Network;
-MimeType=text/html
+Categories=Network;
+MimeType=text/html;
 Terminal=false
 StartupNotify=false

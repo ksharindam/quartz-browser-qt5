@@ -84,7 +84,10 @@ class NetworkAccessManager(QNetworkAccessManager):
         if block:
             #print("Blocked: "+url)
             return QNetworkAccessManager.createRequest(self, op, QNetworkRequest(QUrl()), device)
-        #print(url)
+        #if ("mkv" in url):
+        #    print(url)
+        #    for header in request.rawHeaderList():
+        #        print(request.rawHeader(header))
 
         reply = QNetworkAccessManager.createRequest(self, op, request, device)
         #reply.metaDataChanged.connect(self.gotMetadata)
