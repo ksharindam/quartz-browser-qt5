@@ -1,3 +1,9 @@
+![License](https://img.shields.io/github/license/ksharindam/quartz-browser-qt5)
+![Release](https://img.shields.io/github/v/release/ksharindam/quartz-browser-qt5)
+![Release Date](https://img.shields.io/github/release-date/ksharindam/quartz-browser-qt5)
+![Downloads Total](https://img.shields.io/github/downloads/ksharindam/quartz-browser-qt5/total)
+![Downloads Latest](https://img.shields.io/github/downloads/ksharindam/quartz-browser-qt5/latest/total)
+
 # Quartz Browser
 
 A useful fast Web Browser for Windows and Linux written in pyqt5 webkit  
