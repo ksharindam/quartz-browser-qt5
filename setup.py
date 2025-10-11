@@ -35,7 +35,7 @@ setup(
     ],
     packages=['quartz_browser'],
     entry_points={
-      'console_scripts': ['quartz_browser=quartz_browser.main:main'],
+      'gui_scripts': ['quartz_browser=quartz_browser.main:main'],
     },
     data_files = app_data,
     include_package_data=True,

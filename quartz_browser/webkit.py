@@ -110,8 +110,8 @@ class MyWebPage(QWebPage):
         self.setForwardUnsupportedContent(True)
         self.setLinkDelegationPolicy(2)
         self.setNetworkAccessManager(networkmanager)
-        #self.useragent_desktop = QWebPage.userAgentForUrl(self, QUrl())
-        self.useragent_desktop = "Mozilla/5.0 (X11; Linux) AppleWebKit/538.1 (KHTML, like Gecko) Quartz Safari/538.1"
+        self.useragent_desktop = QWebPage.userAgentForUrl(self, QUrl())
+        #self.useragent_desktop = "Mozilla/5.0 (X11; Linux) AppleWebKit/538.1 (KHTML, like Gecko) Quartz Safari/538.1"
         self.useragent_mobile = 'Nokia 5130'
 
     def userAgentForUrl(self, url):

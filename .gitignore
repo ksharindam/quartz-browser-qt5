@@ -5,8 +5,12 @@ __pycache__/
 
 
 # User created
-cache/
-debian/
 dist/
+build/
 *.egg-info/
+AppDir/
 *.AppImage
+*.zsync
+*.exe
+*.snap
+
