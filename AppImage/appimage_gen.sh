@@ -92,7 +92,11 @@ cp ${QT_PLUGIN_SRC}/bearer/libqgenericbearer.so ${QT_PLUGIN_PATH}/bearer
 
 # ----- End of 'Copy Qt5 Plugins' ------
 
-# Copy Gstreamer plugins and binaries
+# copy ssl
+cp /usr/${LIBDIR}/libssl.so.3 usr/lib
+cp /usr/${LIBDIR}/libcrypto.so.3 usr/lib
+
+# Copy Gstreamer plugins and binaries (for video support)
 mkdir -p ${APPDIR}/usr/lib/gstreamer-1.0
 cp /usr/${LIBDIR}/gstreamer-1.0/*.so usr/lib/gstreamer-1.0
 rm usr/lib/gstreamer-1.0/libgstgio.so
