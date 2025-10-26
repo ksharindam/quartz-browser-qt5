@@ -8,7 +8,7 @@ def readme():
 
 if platform.system()=='Linux':
     app_data = [('share/applications', ['files/quartz-browser.desktop']),
-                ('share/icons', ['files/quartz-browser.png'])]
+                ('share/icons/hicolor/scalable/apps', ['files/quartz-browser.png'])]
 else:
     app_data = []
 
